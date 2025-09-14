@@ -1,0 +1,6 @@
+local gui = Aurora.GuiBuilder:New()
+gui:Category("My Category")
+   :Tab("General")
+   :Header({ text = "Settings" })
+   :Checkbox({ text = "Enable Feature" })
+   :Slider({ text = "Speed" })
