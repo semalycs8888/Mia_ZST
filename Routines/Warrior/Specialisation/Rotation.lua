@@ -5,6 +5,7 @@ local Macro = Aurora.Macro
 
 local spellbooks = {
     spells = {
+        AutoAttack = NewSpell(6603),
         --冲锋
         CHONGFENG = NewSpell(100),
         --[英勇投掷]
@@ -87,6 +88,77 @@ local spellbooks = {
 
 Aurora.SpellHandler.PopulateSpellbook(spellbooks, "WARRIOR", 3, "Mia_Warrior")
 
+--自动法术反射
+local isFSFS = true
+local isSwitchTarget = true
+local isIgnoringPain = 0.28
+local isCZCD = false
+
+local gui = Aurora.GuiBuilder:New()
+gui:Category("Mia_Warrior")
+   :Tab("General")
+   :Header({ text = "Settings" })
+   :Checkbox({
+    text = "Enable automatic spell reflection",
+    key = "feature.isFSFS",  -- Config key for saving
+    default = true,          -- Default value
+    tooltip = "开启自动法术发射 /Aurora SpellReflection", -- Optional tooltip
+    onChange = function(self, checked)
+        -- print("Checkbox changed:", checked)
+        isFSFS = not isFSFS
+    end
+})
+   :Checkbox({
+    text = "Switch targets when losing auto-attack",
+    key = "feature.isSwitchTarget",  -- Config key for saving
+    default = true,          -- Default value
+    tooltip = "丢失自动攻击时切换目标 /Aurora SwitchTarget", -- Optional tooltip
+    onChange = function(self, checked)
+        -- print("Checkbox changed:", checked)
+        isSwitchTarget = not isSwitchTarget
+    end
+   })
+   :Dropdown({
+    text = "Disregard pain control",
+    key = "graphics.isIgnoringPain",
+    options = {
+        { text = "average", value = "average" },
+        { text = "moderate", value = "moderate" },
+        { text = "extreme", value = "extreme" }
+    },
+    default = "average",
+    multi = false,           -- Set to true for multi-select
+    width = 200,            -- Optional
+    tooltip = "无视苦痛吸收量 (average/moderate/extreme, adjustable via macro command/Aurora IgnoringPain average/moderate/extreme)",
+    onChange = function(self, value)
+        if value == "average" then
+            --一般
+            isIgnoringPain = 0.28
+            -- print("设置无视苦痛吸收量：一般")
+        elseif value == "moderate" then
+            --中等
+            isIgnoringPain = 0.56
+            -- print("设置无视苦痛吸收量：中等")
+        elseif value == "extreme" then
+            --极端
+            isIgnoringPain = 0.8
+            -- print("设置无视苦痛吸收量：极端")
+        end
+    end
+})
+    :Checkbox({
+    text = "Demoralizing Shout",
+    key = "feature.isCZCD",  -- Config key for saving
+    default = false,          -- Default value
+    tooltip = "挫志怒吼卡cd /Aurora Shout", -- Optional tooltip
+    onChange = function(self, checked)
+        -- print("Checkbox changed:", checked)
+        isCZCD = not isCZCD
+    end
+   })
+   
+
+
 local player = Aurora.UnitManager:Get("player")
 local target = nil
 local focus = nil
@@ -98,14 +170,14 @@ local addSpellStat = nil
 local rageMin = 35
 
 local isLoop = true
---自动法术反射
-local isFSFS = true
+
 --电缆
 local battleResurrection = Aurora.ItemHandler.NewItem(221955)
 local weaponEnhancement = Aurora.ItemHandler.NewItem(224107)
 local fuwen = Aurora.ItemHandler.NewItem(243191)
 
-local isIgnoringPain = 0.56
+
+local isLT = true
 
 
  --应对减伤
@@ -208,9 +280,30 @@ local function isTargetBehind(spell, distance)
     end
 end
 
+spellbooks.spells.AutoAttack:callback(function(spell,logic)
+    if isSwitchTarget then
+        target = Aurora.UnitManager:Get("target")
+        if target.exists and target.distanceto(player) <= 3.3 and target.playerfacing180 then
+            player.settarget(target)
+        else
+            Aurora.activeenemies:each(function(enemy, index, uptime)
+                if enemy.playerfacing180 and enemy.distanceto(player) <= 3.3 then
+                    player.settarget(enemy)
+                    
+                end
+            end)
+        end
+    end
+    return spell:cast(target)
+end)
+
 spellbooks.spells.LEITINGYIJI:callback(function(spell, logic)
-    -- print("雷霆一击")
-    if player.enemiesaround(10) >= 1 then
+    -- print("雷霆一击",isLT)
+    if player.enemiesaround(10) >= 1 and isLT then
+        return spell:cast(player)
+    end
+    if not spellbooks.spells.DUNPAIMENGJI:ready() and player.enemiesaround(10) >= 1 then
+        -- print("盾猛击cd中")
         return spell:cast(player)
     end
 end)
@@ -255,7 +348,7 @@ end)
 spellbooks.spells.SHENGLIZAIWANG:callback(function(spell, logic)
     -- print("胜利在望")
     if player.hp < 75 then
-        print("胜利在望")
+        -- print("胜利在望")
         isTargetBehind(spell, 5)
     end
     
@@ -273,6 +366,11 @@ spellbooks.spells.WUSHITONGKU:callback(function(spell, logic)
             return spell:cast(player)
         end
     end
+
+    if player.rage >= 90 then
+        return spell:cast(player)
+    end
+
     
 end)
 
@@ -296,10 +394,13 @@ spellbooks.spells.CUOZHINUHOU:callback(function(spell, logic)
     if addSpellStat == "挫志怒吼" then
         if spell:ready() then
             return spell:cast(player)
-        else
-            isLoop = true;
         end
     end
+
+    if isCZCD then
+        return spell:cast(player)
+    end
+
 end)
 
 spellbooks.spells.ZHANSHA2:callback(function(spell, logic)
@@ -318,16 +419,16 @@ spellbooks.spells.ZHANSHA:callback(function(spell, logic)
     --     if enemyCount <= 3 and player.rage >= 40 and player.aura(132404).duration > 4 and player.shieldamount > shiedMax * 0.8 and player.aura(190456).duration > 5  then
     --         isTargetBehind(spell, 5)
     --     end
-    target = Aurora.UnitManager:Get("target")
-    if spellbooks.talents.CUISI:isknown() then
-        if player.aura(52437) then
-            isTargetBehind(spell, 5)
-        elseif player.rage >= 40  then
-            isTargetBehind(spell, 5)
-        end
+    -- target = Aurora.UnitManager:Get("target")
+    -- if spellbooks.talents.CUISI:isknown() then
+    --     if player.aura(52437) then
+    --         isTargetBehind(spell, 5)
+    --     elseif player.rage >= 40  then
+    --         isTargetBehind(spell, 5)
+    --     end
     
 
-    elseif player.rage >= 40 and enemyCount < 4 then
+    if player.rage >= 40 and enemyCount <= 3 then
         isTargetBehind(spell, 5)
     end
 end)
@@ -346,8 +447,8 @@ spellbooks.spells.FUCHOU:callback(function(spell, logic)
         end
     end
     --付费复仇逻辑
-    local shiedMax = player.healthmax * 0.3
-    if player.rage >= 40 and player.auraremains(132404) > 4 and player.shieldamount > shiedMax * isIgnoringPain and player.auraremains(190456) >= 2 and enemyCount >= 1 then
+    -- local shiedMax = player.healthmax * 0.3
+    if player.rage >= 40 and enemyCount >= 1 then
         return spell:cast(player)
     end
 end)
@@ -471,9 +572,10 @@ local function loop()
   if spells.LEITINGYIJI:execute() then return true end
   if spells.DUNPAIMENGJI:execute() then return true end
   
-  if spells.FUCHOU2:execute() then return true end
+--   if spells.FUCHOU2:execute() then return true end
   if spells.ZHANSHA:execute() then return true end
   if spells.FUCHOU:execute() then return true end
+  if spells.AutoAttack:execute() then return true end
   return false
 end
 --鼠标指向战复（道具）
@@ -505,6 +607,8 @@ Aurora:RegisterRoutine(function()
     if player.dead or player.iseating or player.isdrinking or player.issummoning or player.casting or player.mounted then return end
     -- print("玩家名字",player.name)
     resurrectionInBattle()
+    -- target = Aurora.UnitManager:Get("target")
+    -- print(target.distanceto(player))
     if player.combat then
         if healthPotion:ready() and healthPotion:usable(player) and player.hp < 40 then
                 healthPotion:use(player)
@@ -533,7 +637,26 @@ Macro:RegisterCommand("IgnoringPain", function(value)
         isIgnoringPain = 0.8
         print("设置无视苦痛吸收量：极端")
     end
+    Aurora.Config:Write("graphics.isIgnoringPain", value)
 end, "Casts the specified spell")
+
+Macro:RegisterCommand("SwitchTarget", function()
+    isSwitchTarget = not isSwitchTarget
+    Aurora.Config:Write("feature.isSwitchTarget", isSwitchTarget)
+    print("切换目标：",isSwitchTarget)
+end, "切换目标")
+
+Macro:RegisterCommand("SpellReflection", function()
+    isFSFS = not isFSFS
+    Aurora.Config:Write("feature.isFSFS", isFSFS)
+    print("法术反射：",isFSFS)
+end, "法术反射")
+
+Macro:RegisterCommand("Shout", function()
+    isCZCD = not isCZCD
+    Aurora.Config:Write("feature.isCZCD", isCZCD)
+    print("挫志怒吼卡cd：",isCZCD)
+end, "挫志怒吼卡cd")
 
 Aurora.Macro:RegisterCommand("cast", function(spell)
     print("插入技能:",spell)
@@ -549,6 +672,11 @@ Aurora.EventHandler:RegisterEvent("SPELL_CAST_SUCCESS", function(eventData)
         -- print("施法成功",spellName,castedCount)
         if  spellName ~= "盾牌格挡" and spellName ~= "法术反射" and spellName ~= "防御姿态" and spellName ~= "战斗姿态" and spellName ~= "拳击" and spellName ~= "英勇飞跃" and spellName ~= "挑战怒吼" and spellName ~= "盾墙" and spellName ~= "无视苦痛" and spellName ~= "破釜沉舟" and spellName ~= "嘲讽" and spellName ~= "冲锋" then
             castedCount = castedCount + 1
+            isLT = true
+        end
+
+        if spellName == "雷霆一击" or spellName == "雷霆轰击" then
+            isLT = false
         end
         
         if castedCount > 2  then
