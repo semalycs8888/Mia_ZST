@@ -110,6 +110,8 @@ local isDunpaichongfeng = false
 local isLonghou = false
 
 local isGongqiang = false
+--自动天神下凡
+local autoTianshen = false
 
 local gui = Aurora.GuiBuilder:New()
 gui:Category("Mia_Warrior")
@@ -349,14 +351,23 @@ local function injuryResponse()
         end
 end
 
+spellbooks.spells.TIANSHENXIAFAN:callback(function(spell,logic)
+    if autoTianshen then
+        if player.enemiesaround(8) >= 5 or player.speed == 0 then
+            return spell:cast(player)
+        end
+    end
+end)
+
 spellbooks.spells.AutoAttack:callback(function(spell,logic)
+    
     if isSwitchTarget then
         target = Aurora.UnitManager:Get("target")
-        if target.exists and target.distanceto(player) <= 3.3 and target.playerfacing180 then
+        if target.exists and target.distanceto(player) <= 4.3 and target.playerfacing180 then
             player.settarget(target)
-        elseif target.exists and target.distanceto(player) > 3.3 and target.distanceto(player) <= 15 then
+        elseif target.exists and target.distanceto(player) > 4.3 and target.distanceto(player) <= 8 then
             Aurora.activeenemies:each(function(enemy, index, uptime)
-                if enemy.playerfacing180 and enemy.distanceto(player) <= 3.3 then
+                if enemy.playerfacing180 and enemy.distanceto(player) <= 4.3 then
                     player.settarget(enemy)
                     
                 end
@@ -404,8 +415,6 @@ spellbooks.spells.YONGSHIZHIMAO:callback(function(spell, logic)
     if addSpellStat == "cursor勇士之矛" then
         if spell:isknown() and spell:ready() then
             return spell:castcursor()
-        else
-            isLoop = true;
         end
     -- elseif addSpellStat == "target勇士之矛" then
     --     return spell:cast(target)
@@ -463,8 +472,6 @@ spellbooks.spells.DUNPAICHONGFENG:callback(function(spell, logic)
         target = Aurora.UnitManager:Get("target")
         if target.exists and target.enemy and player.distanceto(target) <= 25 and spell:ready() and spell:isknown() then
             return spell:cast(target)
-        else
-            isLoop = true;
         end
     elseif isDunpaichongfeng and spell:ready() and spell:isknown() then
         isTargetBehind(spell, 3)
@@ -484,7 +491,7 @@ spellbooks.spells.CUOZHINUHOU:callback(function(spell, logic)
         yingdui = spell
     end
 
-    if isCZCD then
+    if isCZCD and player.enemiesaround(8) >= 1 and player.speed == 0 then
         return spell:cast(player)
     end
 
@@ -610,7 +617,7 @@ spellbooks.spells.ZHANDOUNUHOU:callback(function(spell, logic)
     if isGongqiang and not player.combat then
         local fgroup = Aurora.fgroup
         fgroup:each(function(unit, i, uptime)
-            if not unit.aura(6673) then
+            if not unit.aura(6673) and unit.alive then
                 return spell:cast(player) -- breaks the loop
             end
         end)
@@ -687,6 +694,7 @@ local function loop()
 
   injuryResponse()
   if spells.QUANJI:execute() then return true end
+  if spells.TIANSHENXIAFAN:execute() then return true end
   if spells.CUOZHINUHOU:execute() then return true end
   if spells.DUNQIANG:execute() then return true end
   if spells.POFUCHENZHOU:execute() then return true end
@@ -721,21 +729,19 @@ end
 local function resurrectionInBattle()
     mouseover = Aurora.UnitManager:Get("mouseover")
     -- print("鼠标指向战复（道具）",battleResurrection:isknown(),battleResurrection:ready())
-    if mouseover.exists and mouseover.friend and mouseover.dead and player.distanceto(mouseover) <= 5 then
-        if battleResurrection:isknown() then
-            if battleResurrection:ready() then
-                battleResurrection:use(mouseover)
-            end
-        end
+    if mouseover.exists and mouseover.friend and mouseover.dead and player.distanceto(mouseover) <= 3 and battleResurrection:isknown() and battleResurrection:ready() then
+        isLoop = false
+        battleResurrection:use(mouseover,function ()
+            isLoop = true
+        end)
+    else
+        isLoop = true
     end
 end
 
 
 local function battleReady()
-    if weaponEnhancement:isknown() and weaponEnhancement:ready() then
-        weaponEnhancement:use(player.weapon)
-    end
-    if fuwen:isknown() and fuwen:ready() then
+    if fuwen:isknown() and fuwen:ready() and not player.aura(1234969) then
         fuwen:use(player)
     end
 end
@@ -748,16 +754,18 @@ Aurora:RegisterRoutine(function()
     resurrectionInBattle()
     -- target = Aurora.UnitManager:Get("target")
     -- print(target.distanceto(player))
-    if player.combat then
-        if healthPotion:ready() and healthPotion:usable(player) and player.hp < 40 then
-                healthPotion:use(player)
-            end
-        loop()
-    else
-        -- print("脱战")
-        -- battleReady()
-        if spells.ZHANDOUNUHOU:execute() then return true end
-        
+    if isLoop then
+        if player.combat then
+            if healthPotion:ready() and healthPotion:usable(player) and player.hp < 40 then
+                    healthPotion:use(player)
+                end
+            loop()
+        else
+            -- print("脱战")
+            battleReady()
+            if spells.ZHANDOUNUHOU:execute() then return true end
+            
+        end
     end
 end, "WARRIOR", 3, "Mia_Warrior")
 
@@ -795,7 +803,7 @@ Aurora.EventHandler:RegisterEvent("SPELL_CAST_SUCCESS", function(eventData)
         end
         -- print(string.format("Cast %s (ID: %d)", spellName, spellId))
         if spellName == addSpellStat then
-            isLoop = true
+            -- isLoop = true
             addSpellStat = nil
             castedCount = 0
         end
@@ -839,7 +847,7 @@ local autoSwitchTarget_toggle = Aurora:AddGlobalToggle({
     label = "自动切换目标",              -- Display name (max 11 characters)
     var = "autoSwitchTarget_toggle",       -- Unique identifier for saving state
     icon = 76290, -- Icon texture or spell ID
-    tooltip = "丢失自动攻击切换目标,生效范围:4-15码", -- Tooltip text
+    tooltip = "丢失自动攻击切换目标,生效范围:4-8码", -- Tooltip text
     onClick = function(value)    -- Optional callback when clicked
         -- print("自动切换目标:", value)
         isSwitchTarget = value
@@ -866,6 +874,17 @@ local autoLonghou_toggle = Aurora:AddGlobalToggle({
     end
 })
 
+local autoTianshen_toggle = Aurora:AddGlobalToggle({
+    label = "天神下凡",              -- Display name (max 11 characters)
+    var = "autoTianshen_toggle",       -- Unique identifier for saving state
+    icon = 107574, -- Icon texture or spell ID
+    tooltip = "自动天神下凡,站住不动或者5目标以上", -- Tooltip text
+    onClick = function(value)    -- Optional callback when clicked
+        -- print("自动切换目标:", value)
+        autoTianshen = value
+    end
+})
+
 local autoGongqiang_toggle = Aurora:AddGlobalToggle({
     label = "战斗怒吼",              -- Display name (max 11 characters)
     var = "autoGongqiang_toggle",       -- Unique identifier for saving state
@@ -879,6 +898,11 @@ local autoGongqiang_toggle = Aurora:AddGlobalToggle({
 if autoLonghou_toggle:GetValue() then
     isLonghou = true
 end
+
+if autoTianshen_toggle:GetValue() then
+    autoTianshen = true
+end
+
 if autoGongqiang_toggle:GetValue() then
     isGongqiang = true
 end
@@ -962,6 +986,12 @@ Macro:RegisterCommand("ThunderousRoar", function()
     autoLonghou_toggle:SetValue(isLonghou)
     -- print("雷鸣之吼：",isLonghou)
 end, "雷鸣之吼")
+Macro:RegisterCommand("BKB", function()
+    autoTianshen = not autoTianshen
+    -- Aurora.Config:Write("feature.isLonghou", isLonghou)
+    autoTianshen_toggle:SetValue(autoTianshen)
+    -- print("天神下凡：",autoTianshen)
+end, "天神下凡")
 
 
 Aurora.Macro:RegisterCommand("cast", function(spell)
