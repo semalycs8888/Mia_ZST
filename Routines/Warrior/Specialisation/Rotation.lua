@@ -89,37 +89,65 @@ local spellbooks = {
 Aurora.SpellHandler.PopulateSpellbook(spellbooks, "WARRIOR", 3, "Mia_Warrior")
 
 --自动法术反射
-local isFSFS = true
-local isSwitchTarget = true
+local isFSFS = false
+local isSwitchTarget = false
 local isIgnoringPain = 0.28
 local isCZCD = false
+--自动打断
+local autoQuanji = false
+--盾墙应对
+local isDUNQIANG = false
+--挫志怒吼应对
+local isCUOZHINUHOU = false
+--破釜沉舟应对
+local isPOFUCHENZHOU = false
+--存放应对技能
+local yingdui = nil
+--应对技能计数
+local yingduicount = 0
+--自动盾牌冲锋和雷鸣之吼
+local isDunpaichongfeng = false
+local isLonghou = false
+
+local isGongqiang = false
 
 local gui = Aurora.GuiBuilder:New()
 gui:Category("Mia_Warrior")
-   :Tab("General")
-   :Header({ text = "Settings" })
+   :Tab("常规")
+   :Header({ text = "减伤应对" })
    :Checkbox({
-    text = "Enable automatic spell reflection",
-    key = "feature.isFSFS",  -- Config key for saving
+    text = "盾墙",
+    key = "feature.isDUNQIANG",  -- Config key for saving
     default = true,          -- Default value
-    tooltip = "开启自动法术发射 /Aurora SpellReflection", -- Optional tooltip
+    tooltip = "盾墙应对", -- Optional tooltip
     onChange = function(self, checked)
         -- print("Checkbox changed:", checked)
-        isFSFS = not isFSFS
+        isDUNQIANG = not isDUNQIANG
     end
 })
    :Checkbox({
-    text = "Switch targets when losing auto-attack",
-    key = "feature.isSwitchTarget",  -- Config key for saving
+    text = "挫志怒吼",
+    key = "feature.isCUOZHINUHOU",  -- Config key for saving
     default = true,          -- Default value
-    tooltip = "丢失自动攻击时切换目标 /Aurora SwitchTarget", -- Optional tooltip
+    tooltip = "挫志怒吼应对", -- Optional tooltip
     onChange = function(self, checked)
         -- print("Checkbox changed:", checked)
-        isSwitchTarget = not isSwitchTarget
+        isCUOZHINUHOU = not isCUOZHINUHOU
     end
    })
+    :Checkbox({
+    text = "破釜沉舟",
+    key = "feature.isPOFUCHENZHOU",  -- Config key for saving
+    default = true,          -- Default value
+    tooltip = "破釜沉舟应对", -- Optional tooltip
+    onChange = function(self, checked)
+        -- print("Checkbox changed:", checked)
+        isPOFUCHENZHOU = not isPOFUCHENZHOU
+    end
+   })
+   :Header({ text = "无视苦痛" })
    :Dropdown({
-    text = "Disregard pain control",
+    text = "无视苦痛阈值",
     key = "graphics.isIgnoringPain",
     options = {
         { text = "average", value = "average" },
@@ -146,16 +174,33 @@ gui:Category("Mia_Warrior")
         end
     end
 })
-    :Checkbox({
-    text = "Demoralizing Shout",
-    key = "feature.isCZCD",  -- Config key for saving
-    default = false,          -- Default value
-    tooltip = "挫志怒吼卡cd /Aurora Shout", -- Optional tooltip
-    onChange = function(self, checked)
-        -- print("Checkbox changed:", checked)
-        isCZCD = not isCZCD
+--     :Checkbox({
+--     text = "Demoralizing Shout",
+--     key = "feature.isCZCD",  -- Config key for saving
+--     default = false,          -- Default value
+--     tooltip = "挫志怒吼卡cd /Aurora Shout", -- Optional tooltip
+--     onChange = function(self, checked)
+--         -- print("Checkbox changed:", checked)
+--         isCZCD = not isCZCD
+--     end
+--    })
+
+   local function InitConfig()
+    -- isFSFS = Aurora.Config:Read("feature.isFSFS")
+    -- isSwitchTarget = Aurora.Config:Read("feature.isSwitchTarget")
+    -- isCZCD = Aurora.Config:Read("feature.isCZCD")
+    isCUOZHINUHOU = Aurora.Config:Read("feature.isCUOZHINUHOU")
+    isPOFUCHENZHOU = Aurora.Config:Read("feature.isPOFUCHENZHOU")
+    isDUNQIANG = Aurora.Config:Read("feature.isDUNQIANG")
+    local isIgnoringPainText = Aurora.Config:Read("graphics.isIgnoringPain")
+    if isIgnoringPainText == "average" then
+        isIgnoringPain = 0.28
+    elseif isIgnoringPainText == "moderate" then
+        isIgnoringPain = 0.56
+    elseif isIgnoringPainText == "extreme" then
+        isIgnoringPain = 0.8
     end
-   })
+end
    
 
 
@@ -280,12 +325,34 @@ local function isTargetBehind(spell, distance)
     end
 end
 
+local function injuryResponse()
+      local activeenemies = Aurora.activeenemies
+        if activeenemies then
+            activeenemies:each(function(enemy, index, uptime)
+                local enemyCastingId = enemy.castingspellid
+                if enemyCastingId then
+                    -- print("正在施法",enemyCastingId)
+                    for k, v in pairs(respondSpells) do
+                        if v == enemyCastingId then
+                            
+                                if yingdui then
+                                    yingdui:cast(player)
+                                end
+                                return true
+                            
+                        end
+                    end
+                end
+            end)
+        end
+end
+
 spellbooks.spells.AutoAttack:callback(function(spell,logic)
     if isSwitchTarget then
         target = Aurora.UnitManager:Get("target")
         if target.exists and target.distanceto(player) <= 3.3 and target.playerfacing180 then
             player.settarget(target)
-        else
+        elseif target.exists and target.distanceto(player) > 3.3 and target.distanceto(player) <= 15 then
             Aurora.activeenemies:each(function(enemy, index, uptime)
                 if enemy.playerfacing180 and enemy.distanceto(player) <= 3.3 then
                     player.settarget(enemy)
@@ -295,6 +362,20 @@ spellbooks.spells.AutoAttack:callback(function(spell,logic)
         end
     end
     return spell:cast(target)
+end)
+
+spellbooks.spells.DUNQIANG:callback(function(spell, logic)
+    if isDUNQIANG and spell:ready() and yingdui == nil then
+        yingdui = spell
+        -- return true
+    end
+end)
+
+spellbooks.spells.POFUCHENZHOU:callback(function(spell, logic)
+    if isPOFUCHENZHOU and spell:ready() and yingdui == nil then
+        yingdui = spell
+        -- return true
+    end
 end)
 
 spellbooks.spells.LEITINGYIJI:callback(function(spell, logic)
@@ -383,7 +464,7 @@ spellbooks.spells.DUNPAICHONGFENG:callback(function(spell, logic)
         else
             isLoop = true;
         end
-    else
+    elseif isDunpaichongfeng and spell:ready() and spell:isknown() then
         isTargetBehind(spell, 3)
     end
     -- isTargetBehind(spell, 5)
@@ -395,6 +476,10 @@ spellbooks.spells.CUOZHINUHOU:callback(function(spell, logic)
         if spell:ready() then
             return spell:cast(player)
         end
+    end
+
+    if isCUOZHINUHOU and spell:isknown() and spell:ready() and yingdui == nil then
+        yingdui = spell
     end
 
     if isCZCD then
@@ -448,7 +533,7 @@ spellbooks.spells.FUCHOU:callback(function(spell, logic)
     end
     --付费复仇逻辑
     -- local shiedMax = player.healthmax * 0.3
-    if player.rage >= 40 and enemyCount >= 1 then
+    if player.rage >= 30 and enemyCount >= 1 then
         return spell:cast(player)
     end
 end)
@@ -506,12 +591,58 @@ spellbooks.spells.LEIMINGZHIHOU:callback(function(spell, logic)
             isLoop = true;
         end
     end
+    --雷鸣之吼
+    if isLonghou and spell:isknown() and spell:ready() then
+        if player.speed == 0 or player.enemiesaround(10) > 4 then
+            return spell:cast(player)
+        end
+    end
 end)
 
 spellbooks.spells.ZHANDOUNUHOU:callback(function(spell, logic)
     -- print("战斗怒吼")
     if addSpellStat == "战斗怒吼" then
         return spell:cast(player)
+    end
+    --自动战斗怒吼
+    if isGongqiang and not player.combat then
+        local fgroup = Aurora.fgroup
+        fgroup:each(function(unit, i, uptime)
+            if not unit.aura(6673) then
+                return spell:cast(player) -- breaks the loop
+            end
+        end)
+        -- return spell:cast(player)
+    end
+end)
+
+spellbooks.spells.QUANJI:callback(function(spell, logic)
+    --  print("自动打断")
+    if autoQuanji and spellbooks.spells.QUANJI:ready() then
+       
+        target = Aurora.UnitManager:Get("target")
+        focus = Aurora.UnitManager:Get("focus")
+        if focus.exists and focus.distanceto(player) <= 4 and player.haslos(focus) and focus.enemy and focus.alive and focus.castinginterruptible and focus.playerfacing180 and focus.castingpct >= 50 then
+            return spell:cast(focus)
+        end
+        if focus.exists and focus.distanceto(player) <= 4 and player.haslos(focus) and focus.enemy and focus.alive and focus.channelinginterruptible and focus.playerfacing180 and focus.channelingpct >= 50 then
+            return spell:cast(focus)
+        end
+
+        local activeenemies = Aurora.activeenemies
+        if activeenemies and not focus.exists then
+        activeenemies:each(function(enemy, index, uptime)
+            -- print("进战斗的怪",enemy.name)
+            if enemy.castinginterruptible and enemy.exists and enemy.distanceto(player) <= 4 and player.haslos(enemy) and enemy.enemy and enemy.alive and enemy.playerfacing180 and enemy.castingpct >= 50 then
+                spell:cast(enemy)
+                return true -- break the loop
+            end
+            if enemy.channelinginterruptible and enemy.exists and enemy.distanceto(player) <= 4 and player.haslos(enemy) and enemy.enemy and enemy.alive and enemy.playerfacing180 and enemy.channelingpct >= 50 then
+                spell:cast(enemy)
+                return true -- break the loop
+            end
+            end)    
+        end
     end
 end)
 
@@ -551,9 +682,15 @@ local spells = spellbook.spells
 local healthPotion = Aurora.ItemHandler.NewItem(244839)
 
 local function loop()
+
+  injuryResponse()
+  if spells.QUANJI:execute() then return true end
+  if spells.CUOZHINUHOU:execute() then return true end
+  if spells.DUNQIANG:execute() then return true end
+  if spells.POFUCHENZHOU:execute() then return true end
   if spells.YONGSHIZHIMAO:execute() then return true end
   if spells.DUNPAICHONGFENG:execute() then return true end
-  if spells.CUOZHINUHOU:execute() then return true end
+  
   if spells.JIJIENAHAN:execute() then return true end
   if spells.ZHENDANGBO:execute() then return true end
   if spells.FANGBAOZHICHUI:execute() then return true end
@@ -617,11 +754,157 @@ Aurora:RegisterRoutine(function()
     else
         -- print("脱战")
         -- battleReady()
+        if spells.ZHANDOUNUHOU:execute() then return true end
+        
     end
 end, "WARRIOR", 3, "Mia_Warrior")
 
 
 -- /Aurora Feidun 
+
+
+Aurora.EventHandler:RegisterEvent("SPELL_CAST_SUCCESS", function(eventData)
+    if eventData.source.guid == UnitGUID("player") then
+        local spellId, spellName = unpack(eventData.params)
+        -- print("施法成功",spellName,castedCount)
+        if  spellName ~= "盾牌格挡" and spellName ~= "法术反射" and spellName ~= "防御姿态" and spellName ~= "战斗姿态" and spellName ~= "拳击" and spellName ~= "英勇飞跃" and spellName ~= "挑战怒吼" and spellName ~= "盾墙" and spellName ~= "无视苦痛" and spellName ~= "破釜沉舟" and spellName ~= "嘲讽" and spellName ~= "冲锋" then
+            castedCount = castedCount + 1
+            --应对技能计数
+            yingduicount = yingduicount + 1
+            isLT = true
+        end
+
+        if spellId == 1160 or spellId == 12975 or spellId == 871 then
+            yingduicount = 0
+        end
+
+        if yingduicount > 5 then
+            yingduicount = 0
+            yingdui = nil
+        end
+
+        if spellName == "雷霆一击" or spellName == "雷霆轰击" then
+            isLT = false
+        end
+        
+        if castedCount > 2  then
+            addSpellStat = nil
+            castedCount = 0
+        end
+        -- print(string.format("Cast %s (ID: %d)", spellName, spellId))
+        if spellName == addSpellStat then
+            isLoop = true
+            addSpellStat = nil
+            castedCount = 0
+        end
+    end
+end)
+
+local autoQuanji_toggle = Aurora:AddGlobalToggle({
+    label = "自动打断",              -- Display name (max 11 characters)
+    var = "autoQuanji_toggle",       -- Unique identifier for saving state
+    icon = 6552, -- Icon texture or spell ID
+    tooltip = "自动打断", -- Tooltip text
+    onClick = function(value)    -- Optional callback when clicked
+        -- print("自动打断:", value)
+        autoQuanji = value
+    end
+})
+
+local autoFS_toggle = Aurora:AddGlobalToggle({
+    label = "自动法术反射",              -- Display name (max 11 characters)
+    var = "autoFS_toggle",       -- Unique identifier for saving state
+    icon = 23920, -- Icon texture or spell ID
+    tooltip = "自动法术反射", -- Tooltip text
+    onClick = function(value)    -- Optional callback when clicked
+        -- print("自动打断:", value)
+        isFSFS = value
+    end
+})
+
+local autoCZCD_toggle = Aurora:AddGlobalToggle({
+    label = "挫志怒吼卡cd",              -- Display name (max 11 characters)
+    var = "autoCZCD_toggle",       -- Unique identifier for saving state
+    icon = 1160, -- Icon texture or spell ID
+    tooltip = "挫志怒吼卡cd", -- Tooltip text
+    onClick = function(value)    -- Optional callback when clicked
+        -- print("自动打断:", value)
+        isCZCD = value
+    end
+})
+
+local autoSwitchTarget_toggle = Aurora:AddGlobalToggle({
+    label = "自动切换目标",              -- Display name (max 11 characters)
+    var = "autoSwitchTarget_toggle",       -- Unique identifier for saving state
+    icon = 76290, -- Icon texture or spell ID
+    tooltip = "丢失自动攻击切换目标,生效范围:4-15码", -- Tooltip text
+    onClick = function(value)    -- Optional callback when clicked
+        -- print("自动切换目标:", value)
+        isSwitchTarget = value
+    end
+})
+local autoDunpaichongfeng_toggle = Aurora:AddGlobalToggle({
+    label = "盾牌冲锋",              -- Display name (max 11 characters)
+    var = "autoDunpaichongfeng_toggle",       -- Unique identifier for saving state
+    icon = 385952, -- Icon texture or spell ID
+    tooltip = "冲锋最近的,防止位移", -- Tooltip text
+    onClick = function(value)    -- Optional callback when clicked
+        -- print("自动切换目标:", value)
+        isDunpaichongfeng = value
+    end
+})
+local autoLonghou_toggle = Aurora:AddGlobalToggle({
+    label = "雷鸣之吼",              -- Display name (max 11 characters)
+    var = "autoLonghou_toggle",       -- Unique identifier for saving state
+    icon = 384318, -- Icon texture or spell ID
+    tooltip = "站住不动或者周围4目标以上", -- Tooltip text
+    onClick = function(value)    -- Optional callback when clicked
+        -- print("自动切换目标:", value)
+        isLonghou = value
+    end
+})
+
+local autoGongqiang_toggle = Aurora:AddGlobalToggle({
+    label = "战斗怒吼",              -- Display name (max 11 characters)
+    var = "autoGongqiang_toggle",       -- Unique identifier for saving state
+    icon = 6673, -- Icon texture or spell ID
+    tooltip = "脱战生效,战斗中用宏插入", -- Tooltip text
+    onClick = function(value)    -- Optional callback when clicked
+        -- print("自动切换目标:", value)
+        isGongqiang = value
+    end
+})
+if autoLonghou_toggle:GetValue() then
+    isLonghou = true
+end
+if autoGongqiang_toggle:GetValue() then
+    isGongqiang = true
+end
+
+if autoDunpaichongfeng_toggle:GetValue() then
+    isDunpaichongfeng = true
+end
+
+if autoSwitchTarget_toggle:GetValue() then
+    isSwitchTarget = true
+end
+
+if autoCZCD_toggle:GetValue() then
+    isCZCD = true
+end
+
+if autoFS_toggle:GetValue() then
+    -- print("自动法术反射：",autoFS_toggle:GetValue())
+    isFSFS = true
+end
+
+-- Later you can check the toggle state
+if autoQuanji_toggle:GetValue() then
+    -- AoE mode is enabled
+    -- print("卡CD飞盾")
+    -- autoQuanji_toggle:SetValue(true)
+    autoQuanji = true
+end
 Macro:RegisterCommand("IgnoringPain", function(value)
     -- print(isFeidun)
     if value == "average" then
@@ -642,21 +925,42 @@ end, "Casts the specified spell")
 
 Macro:RegisterCommand("SwitchTarget", function()
     isSwitchTarget = not isSwitchTarget
-    Aurora.Config:Write("feature.isSwitchTarget", isSwitchTarget)
-    print("切换目标：",isSwitchTarget)
+    -- Aurora.Config:Write("feature.isSwitchTarget", isSwitchTarget)
+    autoSwitchTarget_toggle:SetValue(isSwitchTarget)
+    -- print("切换目标：",isSwitchTarget)
 end, "切换目标")
 
 Macro:RegisterCommand("SpellReflection", function()
     isFSFS = not isFSFS
-    Aurora.Config:Write("feature.isFSFS", isFSFS)
-    print("法术反射：",isFSFS)
+    autoFS_toggle:SetValue(isFSFS)
+    -- print("法术反射：",isFSFS)
 end, "法术反射")
 
 Macro:RegisterCommand("Shout", function()
     isCZCD = not isCZCD
-    Aurora.Config:Write("feature.isCZCD", isCZCD)
-    print("挫志怒吼卡cd：",isCZCD)
+    -- Aurora.Config:Write("feature.isCZCD", isCZCD)
+    autoCZCD_toggle:SetValue(isCZCD)
+    -- print("挫志怒吼卡cd：",isCZCD)
 end, "挫志怒吼卡cd")
+Macro:RegisterCommand("AutomaticInterruption", function()
+    autoQuanji = not autoQuanji
+    -- Aurora.Config:Write("feature.isCZCD", isCZCD)
+    autoQuanji_toggle:SetValue(autoQuanji)
+    -- print("自动打断：",autoQuanji)
+end, "自动打断")
+Macro:RegisterCommand("ShieldCharge", function()
+    isDunpaichongfeng = not isDunpaichongfeng
+    -- Aurora.Config:Write("feature.isDunpaichongfeng", isDunpaichongfeng)
+    autoDunpaichongfeng_toggle:SetValue(isDunpaichongfeng)
+    -- print("盾牌冲锋：",isDunpaichongfeng)
+end, "盾牌冲锋")
+Macro:RegisterCommand("ThunderousRoar", function()
+    isLonghou = not isLonghou
+    -- Aurora.Config:Write("feature.isLonghou", isLonghou)
+    autoLonghou_toggle:SetValue(isLonghou)
+    -- print("雷鸣之吼：",isLonghou)
+end, "雷鸣之吼")
+
 
 Aurora.Macro:RegisterCommand("cast", function(spell)
     print("插入技能:",spell)
@@ -666,31 +970,8 @@ Aurora.Macro:RegisterCommand("cast", function(spell)
     end
 end, "Casts the specified spell")
 
-Aurora.EventHandler:RegisterEvent("SPELL_CAST_SUCCESS", function(eventData)
-    if eventData.source.guid == UnitGUID("player") then
-        local spellId, spellName = unpack(eventData.params)
-        -- print("施法成功",spellName,castedCount)
-        if  spellName ~= "盾牌格挡" and spellName ~= "法术反射" and spellName ~= "防御姿态" and spellName ~= "战斗姿态" and spellName ~= "拳击" and spellName ~= "英勇飞跃" and spellName ~= "挑战怒吼" and spellName ~= "盾墙" and spellName ~= "无视苦痛" and spellName ~= "破釜沉舟" and spellName ~= "嘲讽" and spellName ~= "冲锋" then
-            castedCount = castedCount + 1
-            isLT = true
-        end
 
-        if spellName == "雷霆一击" or spellName == "雷霆轰击" then
-            isLT = false
-        end
-        
-        if castedCount > 2  then
-            addSpellStat = nil
-            castedCount = 0
-        end
-        -- print(string.format("Cast %s (ID: %d)", spellName, spellId))
-        if spellName == addSpellStat then
-            isLoop = true
-            addSpellStat = nil
-            castedCount = 0
-        end
-    end
-end)
-
-
+InitConfig()
+Aurora:RemoveGlobalToggle("rotation_interrupt")
+Aurora:RemoveGlobalToggle("rotation_cooldown")
 return Mia_Warrior
