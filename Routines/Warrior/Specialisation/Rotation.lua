@@ -112,6 +112,17 @@ local isLonghou = false
 local isGongqiang = false
 --自动天神下凡
 local autoTianshen = false
+--自动嘲讽
+local isChaofeng = false
+--大技能开关
+local iscds = false
+--用户设置战斗时长阈值
+local iscdsTime = 20
+
+local mouseoverfuhuo = true
+local baofayao = true
+local shengmingyao = true
+local shengmingyaoyuzhi = 20
 
 local gui = Aurora.GuiBuilder:New()
 gui:Category("Mia_Warrior")
@@ -149,48 +160,100 @@ gui:Category("Mia_Warrior")
    })
    :Header({ text = "无视苦痛" })
    :Dropdown({
-    text = "无视苦痛阈值",
-    key = "graphics.isIgnoringPain",
-    options = {
-        { text = "average", value = "average" },
-        { text = "moderate", value = "moderate" },
-        { text = "extreme", value = "extreme" }
-    },
-    default = "average",
-    multi = false,           -- Set to true for multi-select
-    width = 200,            -- Optional
-    tooltip = "无视苦痛吸收量 (average/moderate/extreme, adjustable via macro command/Aurora IgnoringPain average/moderate/extreme)",
-    onChange = function(self, value)
-        if value == "average" then
-            --一般
-            isIgnoringPain = 0.28
-            -- print("设置无视苦痛吸收量：一般")
-        elseif value == "moderate" then
-            --中等
-            isIgnoringPain = 0.56
-            -- print("设置无视苦痛吸收量：中等")
-        elseif value == "extreme" then
-            --极端
-            isIgnoringPain = 0.8
-            -- print("设置无视苦痛吸收量：极端")
+        text = "无视苦痛阈值",
+        key = "graphics.isIgnoringPain",
+        options = {
+            { text = "average", value = "average" },
+            { text = "moderate", value = "moderate" },
+            { text = "extreme", value = "extreme" }
+        },
+        default = "average",
+        multi = false,           -- Set to true for multi-select
+        width = 200,            -- Optional
+        tooltip = "无视苦痛吸收量 (average/moderate/extreme, adjustable via macro command/Aurora IgnoringPain average/moderate/extreme)",
+        onChange = function(self, value)
+            if value == "average" then
+                --一般
+                isIgnoringPain = 0.28
+                -- print("设置无视苦痛吸收量：一般")
+            elseif value == "moderate" then
+                --中等
+                isIgnoringPain = 0.56
+                -- print("设置无视苦痛吸收量：中等")
+            elseif value == "extreme" then
+                --极端
+                isIgnoringPain = 0.8
+                -- print("设置无视苦痛吸收量：极端")
+            end
         end
+    })
+     :Header({ text = "针对天神下凡,雷鸣之吼,挫志怒吼开启自动的控制" })
+    :Slider({
+        text = "战斗时长低于设置秒数,不开启",
+        key = "graphics.viewDistance",
+        min = 10,
+        max = 60,
+        default = 20,
+        onChange = function(self, value)
+            -- print("战斗时长低于设置秒数,不开启:", value)
+            iscdsTime = value
+        end
+   })
+   :Tab("功能")
+    :Checkbox({
+    text = "道具战复（鼠标指向）",
+    key = "feature.mouseoverfuhuo",  -- Config key for saving
+    default = true,          -- Default value
+    tooltip = "开启后,指向会自动使用道具战复,只支持3星电缆", -- Optional tooltip
+    onChange = function(self, checked)
+        -- print("Checkbox changed:", checked)
+        mouseoverfuhuo = not mouseoverfuhuo
     end
-})
+   })
+    :Checkbox({
+    text = "天神自动使用[淬火药水3星]",
+    key = "feature.baofayao",  -- Config key for saving
+    default = true,          -- Default value
+    tooltip = "开启后会自动使用爆发药，需要有[淬火药水3星]", -- Optional tooltip
+    onChange = function(self, checked)
+        -- print("Checkbox changed:", checked)
+        baofayao = not baofayao
+    end
+   })
+
+
 --     :Checkbox({
---     text = "Demoralizing Shout",
---     key = "feature.isCZCD",  -- Config key for saving
---     default = false,          -- Default value
---     tooltip = "挫志怒吼卡cd /Aurora Shout", -- Optional tooltip
+--     text = "自动使用生命药水(默认有，开关没做)",
+--     key = "feature.shengmingyao",  -- Config key for saving
+--     default = true,          -- Default value
+--     tooltip = "开启后会自动使用生命药", -- Optional tooltip
 --     onChange = function(self, checked)
 --         -- print("Checkbox changed:", checked)
---         isCZCD = not isCZCD
+--         shengmingyao = not shengmingyao
 --     end
 --    })
+   :Slider({
+        text = "使用[焕生治疗药水]阈值",
+        key = "feature.shengmingyaoyuzhi",
+        min = 10,
+        max = 100,
+        default = 20,
+        onChange = function(self, value)
+            -- print("使用生命药水阈值:", value)
+            shengmingyaoyuzhi = value
+        end
+   })
+
 
    local function InitConfig()
     -- isFSFS = Aurora.Config:Read("feature.isFSFS")
     -- isSwitchTarget = Aurora.Config:Read("feature.isSwitchTarget")
     -- isCZCD = Aurora.Config:Read("feature.isCZCD")
+    -- shengmingyao = Aurora.Config:Read("feature.shengmingyao")
+    shengmingyaoyuzhi = Aurora.Config:Read("feature.shengmingyaoyuzhi")
+    mouseoverfuhuo = Aurora.Config:Read("feature.mouseoverfuhuo")
+    baofayao = Aurora.Config:Read("feature.baofayao")
+    iscdsTime = Aurora.Config:Read("graphics.viewDistance")
     isCUOZHINUHOU = Aurora.Config:Read("feature.isCUOZHINUHOU")
     isPOFUCHENZHOU = Aurora.Config:Read("feature.isPOFUCHENZHOU")
     isDUNQIANG = Aurora.Config:Read("feature.isDUNQIANG")
@@ -222,9 +285,12 @@ local isLoop = true
 local battleResurrection = Aurora.ItemHandler.NewItem(221955)
 local weaponEnhancement = Aurora.ItemHandler.NewItem(224107)
 local fuwen = Aurora.ItemHandler.NewItem(243191)
-
+local baofayaopostion = Aurora.ItemHandler.NewItem(212265)
 
 local isLT = true
+local autopohuaizhe = false
+local autoyongshizhimao = false
+
 
 
  --应对减伤
@@ -329,6 +395,27 @@ local function isTargetBehind(spell, distance)
     end
 end
 
+local function isCooldown()
+    local avgTTD = Aurora.groupttd()
+    -- print("avgTTD",avgTTD)
+    if avgTTD > iscdsTime then
+        -- Use longer cooldowns
+        iscds = true
+        return true
+    else 
+        iscds = false
+        return false
+        -- Use burst abilities
+    end
+
+end
+
+local function isBaofayao()
+    if baofayaopostion:isknown() and baofayaopostion:ready() and baofayaopostion:usable(player) and baofayao and player.aura(107574) and player.auraremains(107574) >= 8 then
+         return baofayaopostion:use(player)
+    end
+end
+
 local function injuryResponse()
       local activeenemies = Aurora.activeenemies
         if activeenemies then
@@ -352,10 +439,20 @@ local function injuryResponse()
 end
 
 spellbooks.spells.TIANSHENXIAFAN:callback(function(spell,logic)
-    if autoTianshen then
+    if autoTianshen and isCooldown() then
         if player.enemiesaround(8) >= 5 or player.speed == 0 then
             return spell:cast(player)
         end
+    end
+end)
+
+spellbooks.spells.CHAOFENG:callback(function(spell,logic)
+    if isChaofeng then
+        Aurora.activeenemies:each(function(enemy, index, uptime)
+            if enemy.threat ~= nil and enemy.threat < 100 and enemy.distanceto(player) <= 30 and enemy.haslos(player) then
+                return spell:cast(enemy)
+            end
+        end)
     end
 end)
 
@@ -419,6 +516,45 @@ spellbooks.spells.YONGSHIZHIMAO:callback(function(spell, logic)
     -- elseif addSpellStat == "target勇士之矛" then
     --     return spell:cast(target)
     end
+     if autoyongshizhimao then
+        if spell:ready() and spell:isknown() and player.speed == 0 then
+            return spell:smartaoe(target, {
+                offsetMin = 0,         -- Minimum offset distance
+                offsetMax = 8,         -- Maximum offset distance
+                distanceSteps = 24,    -- Number of distance checks
+                circleSteps = 48,      -- Number of circular positions to check
+                filter = function(unit, distance, position) -- Optional filter function
+                    return true -- Return true to count this unit
+                end,
+                ignoreEnemies = false, -- Ignore enemy units
+                ignoreFriends = true,  -- Ignore friendly units
+            })
+        end
+    end
+end)
+spellbooks.spells.POHUAIZHE:callback(function(spell, logic)
+    if addSpellStat == "cursor破坏者" then
+        if spell:ready() and spell:isknown() then
+            return spell:castcursor()
+        end
+    end
+
+    if autopohuaizhe then
+        if spell:ready() and spell:isknown() and player.speed == 0 then
+            return spell:smartaoe(target, {
+                offsetMin = 0,         -- Minimum offset distance
+                offsetMax = 8,         -- Maximum offset distance
+                distanceSteps = 24,    -- Number of distance checks
+                circleSteps = 48,      -- Number of circular positions to check
+                filter = function(unit, distance, position) -- Optional filter function
+                    return true -- Return true to count this unit
+                end,
+                ignoreEnemies = false, -- Ignore enemy units
+                ignoreFriends = true,  -- Ignore friendly units
+            })
+        end
+    end
+
 end)
 
 spellbooks.spells.DUNPAIGEDANG:callback(function(spell, logic)
@@ -487,11 +623,11 @@ spellbooks.spells.CUOZHINUHOU:callback(function(spell, logic)
         end
     end
 
-    if isCUOZHINUHOU and spell:isknown() and spell:ready() and yingdui == nil then
+    if isCUOZHINUHOU  and spell:isknown() and spell:ready() and yingdui == nil then
         yingdui = spell
     end
 
-    if isCZCD and player.enemiesaround(8) >= 1 and player.speed == 0 then
+    if isCZCD and player.enemiesaround(8) >= 1 and player.speed == 0 and isCooldown() then
         return spell:cast(player)
     end
 
@@ -601,7 +737,7 @@ spellbooks.spells.LEIMINGZHIHOU:callback(function(spell, logic)
         end
     end
     --雷鸣之吼
-    if isLonghou and spell:isknown() and spell:ready() then
+    if isLonghou and spell:isknown() and spell:ready() and isCooldown() then
         if player.speed == 0 or player.enemiesaround(10) > 4 then
             return spell:cast(player)
         end
@@ -617,7 +753,7 @@ spellbooks.spells.ZHANDOUNUHOU:callback(function(spell, logic)
     if isGongqiang and not player.combat then
         local fgroup = Aurora.fgroup
         fgroup:each(function(unit, i, uptime)
-            if not unit.aura(6673) and unit.alive then
+            if not unit.aura(6673) and unit.alive and unit.distanceto(player) <= 100 then
                 return spell:cast(player) -- breaks the loop
             end
         end)
@@ -688,18 +824,23 @@ end)
 
 local spellbook = Aurora.SpellHandler.Spellbooks.warrior["3"].Mia_Warrior
 local spells = spellbook.spells
-local healthPotion = Aurora.ItemHandler.NewItem(244839)
+local healthPotion1 = Aurora.ItemHandler.NewItem(244839)
+local healthPotion2 = Aurora.ItemHandler.NewItem(244838)
+local healthPotion3 = Aurora.ItemHandler.NewItem(244835)
 
 local function loop()
 
   injuryResponse()
   if spells.QUANJI:execute() then return true end
+  if spells.CHAOFENG:execute() then return true end
   if spells.TIANSHENXIAFAN:execute() then return true end
   if spells.CUOZHINUHOU:execute() then return true end
   if spells.DUNQIANG:execute() then return true end
   if spells.POFUCHENZHOU:execute() then return true end
   if spells.YONGSHIZHIMAO:execute() then return true end
   if spells.DUNPAICHONGFENG:execute() then return true end
+  if spells.POHUAIZHE:execute() then return true end
+  if spells.YONGSHIZHIMAO:execute() then return true end
   
   if spells.JIJIENAHAN:execute() then return true end
   if spells.ZHENDANGBO:execute() then return true end
@@ -729,7 +870,7 @@ end
 local function resurrectionInBattle()
     mouseover = Aurora.UnitManager:Get("mouseover")
     -- print("鼠标指向战复（道具）",battleResurrection:isknown(),battleResurrection:ready())
-    if mouseover.exists and mouseover.friend and mouseover.dead and player.distanceto(mouseover) <= 3 and battleResurrection:isknown() and battleResurrection:ready() then
+    if mouseover.exists and mouseover.friend and mouseover.dead and player.distanceto(mouseover) <= 3 and battleResurrection:isknown() and battleResurrection:ready() and mouseoverfuhuo then
         isLoop = false
         battleResurrection:use(mouseover,function ()
             isLoop = true
@@ -756,9 +897,16 @@ Aurora:RegisterRoutine(function()
     -- print(target.distanceto(player))
     if isLoop then
         if player.combat then
-            if healthPotion:ready() and healthPotion:usable(player) and player.hp < 40 then
-                    healthPotion:use(player)
-                end
+            if healthPotion1:isknown() and healthPotion1:ready() and healthPotion1:usable(player) and player.hp < shengmingyaoyuzhi then
+                    healthPotion1:use(player)
+            end
+            if healthPotion2:isknown() and healthPotion2:ready() and healthPotion2:usable(player) and player.hp < shengmingyaoyuzhi then
+                    healthPotion2:use(player)
+            end
+            if healthPotion3:isknown() and healthPotion3:ready() and healthPotion3:usable(player) and player.hp < shengmingyaoyuzhi then
+                    healthPotion3:use(player)
+            end
+            isBaofayao()
             loop()
         else
             -- print("脱战")
@@ -821,6 +969,27 @@ local autoQuanji_toggle = Aurora:AddGlobalToggle({
     end
 })
 
+local autoChaofeng_toggle = Aurora:AddGlobalToggle({
+    label = "自动嘲讽",              -- Display name (max 11 characters)
+    var = "autoChaofeng_toggle",       -- Unique identifier for saving state
+    icon = 355, -- Icon texture or spell ID
+    tooltip = "自动嘲讽", -- Tooltip text
+    onClick = function(value)    -- Optional callback when clicked
+        -- print("自动打断:", value)
+        isChaofeng = value
+    end
+})
+local autoGongqiang_toggle = Aurora:AddGlobalToggle({
+    label = "战斗怒吼",              -- Display name (max 11 characters)
+    var = "autoGongqiang_toggle",       -- Unique identifier for saving state
+    icon = 6673, -- Icon texture or spell ID
+    tooltip = "脱战生效,战斗中用宏插入", -- Tooltip text
+    onClick = function(value)    -- Optional callback when clicked
+        -- print("自动切换目标:", value)
+        isGongqiang = value
+    end
+})
+
 local autoFS_toggle = Aurora:AddGlobalToggle({
     label = "自动法术反射",              -- Display name (max 11 characters)
     var = "autoFS_toggle",       -- Unique identifier for saving state
@@ -832,16 +1001,7 @@ local autoFS_toggle = Aurora:AddGlobalToggle({
     end
 })
 
-local autoCZCD_toggle = Aurora:AddGlobalToggle({
-    label = "挫志怒吼卡cd",              -- Display name (max 11 characters)
-    var = "autoCZCD_toggle",       -- Unique identifier for saving state
-    icon = 1160, -- Icon texture or spell ID
-    tooltip = "挫志怒吼卡cd", -- Tooltip text
-    onClick = function(value)    -- Optional callback when clicked
-        -- print("自动打断:", value)
-        isCZCD = value
-    end
-})
+
 
 local autoSwitchTarget_toggle = Aurora:AddGlobalToggle({
     label = "自动切换目标",              -- Display name (max 11 characters)
@@ -861,6 +1021,16 @@ local autoDunpaichongfeng_toggle = Aurora:AddGlobalToggle({
     onClick = function(value)    -- Optional callback when clicked
         -- print("自动切换目标:", value)
         isDunpaichongfeng = value
+    end
+})
+local autoCZCD_toggle = Aurora:AddGlobalToggle({
+    label = "挫志怒吼卡cd",              -- Display name (max 11 characters)
+    var = "autoCZCD_toggle",       -- Unique identifier for saving state
+    icon = 1160, -- Icon texture or spell ID
+    tooltip = "挫志怒吼卡cd", -- Tooltip text
+    onClick = function(value)    -- Optional callback when clicked
+        -- print("自动打断:", value)
+        isCZCD = value
     end
 })
 local autoLonghou_toggle = Aurora:AddGlobalToggle({
@@ -884,19 +1054,43 @@ local autoTianshen_toggle = Aurora:AddGlobalToggle({
         autoTianshen = value
     end
 })
-
-local autoGongqiang_toggle = Aurora:AddGlobalToggle({
-    label = "战斗怒吼",              -- Display name (max 11 characters)
-    var = "autoGongqiang_toggle",       -- Unique identifier for saving state
-    icon = 6673, -- Icon texture or spell ID
-    tooltip = "脱战生效,战斗中用宏插入", -- Tooltip text
+local autopohuaizhe_toggle = Aurora:AddGlobalToggle({
+    label = "破坏者",              -- Display name (max 11 characters)
+    var = "autopohuaizhe_toggle",       -- Unique identifier for saving state
+    icon = 228920, -- Icon texture or spell ID
+    tooltip = "自动破坏者", -- Tooltip text
     onClick = function(value)    -- Optional callback when clicked
         -- print("自动切换目标:", value)
-        isGongqiang = value
+        autopohuaizhe = value
     end
 })
+
+local autoyongshizhimao_toggle = Aurora:AddGlobalToggle({
+    label = "勇士之矛",              -- Display name (max 11 characters)
+    var = "autoyongshizhimao_toggle",       -- Unique identifier for saving state
+    icon = 376079, -- Icon texture or spell ID
+    tooltip = "自动勇士之矛", -- Tooltip text
+    onClick = function(value)    -- Optional callback when clicked
+        -- print("自动切换目标:", value)
+        autoyongshizhimao = value
+    end
+})
+
+
+if autoyongshizhimao_toggle:GetValue() then
+    autoyongshizhimao = true
+end
+
+if autopohuaizhe_toggle:GetValue() then
+    autopohuaizhe = true
+end
+
 if autoLonghou_toggle:GetValue() then
     isLonghou = true
+end
+
+if autoChaofeng_toggle:GetValue() then
+    isChaofeng = true
 end
 
 if autoTianshen_toggle:GetValue() then
@@ -961,6 +1155,12 @@ Macro:RegisterCommand("SpellReflection", function()
     autoFS_toggle:SetValue(isFSFS)
     -- print("法术反射：",isFSFS)
 end, "法术反射")
+Macro:RegisterCommand("ridicule", function()
+    isChaofeng = not isChaofeng
+    -- Aurora.Config:Write("feature.isCZCD", isCZCD)
+    autoChaofeng_toggle:SetValue(isChaofeng)
+    -- print("自动嘲讽：",isChaofeng)
+end, "自动嘲讽")
 
 Macro:RegisterCommand("Shout", function()
     isCZCD = not isCZCD
