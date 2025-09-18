@@ -246,10 +246,6 @@ gui:Category("Mia_Warrior")
 
 
    local function InitConfig()
-    -- isFSFS = Aurora.Config:Read("feature.isFSFS")
-    -- isSwitchTarget = Aurora.Config:Read("feature.isSwitchTarget")
-    -- isCZCD = Aurora.Config:Read("feature.isCZCD")
-    -- shengmingyao = Aurora.Config:Read("feature.shengmingyao")
     shengmingyaoyuzhi = Aurora.Config:Read("feature.shengmingyaoyuzhi")
     mouseoverfuhuo = Aurora.Config:Read("feature.mouseoverfuhuo")
     baofayao = Aurora.Config:Read("feature.baofayao")
@@ -643,21 +639,7 @@ spellbooks.spells.ZHANSHA2:callback(function(spell, logic)
 end)
 
 spellbooks.spells.ZHANSHA:callback(function(spell, logic)
-    -- print("斩杀")
     local enemyCount = player.enemiesaround(5)
-    -- local shiedMax = player.healthmax * 0.3
-    --     if enemyCount <= 3 and player.rage >= 40 and player.aura(132404).duration > 4 and player.shieldamount > shiedMax * 0.8 and player.aura(190456).duration > 5  then
-    --         isTargetBehind(spell, 5)
-    --     end
-    -- target = Aurora.UnitManager:Get("target")
-    -- if spellbooks.talents.CUISI:isknown() then
-    --     if player.aura(52437) then
-    --         isTargetBehind(spell, 5)
-    --     elseif player.rage >= 40  then
-    --         isTargetBehind(spell, 5)
-    --     end
-    
-
     if player.rage >= 40 and enemyCount <= 3 then
         isTargetBehind(spell, 5)
     end
@@ -691,6 +673,14 @@ spellbooks.spells.FUCHOU2:callback(function(spell, logic)
     end
 end)
 
+spellbooks.spells.PODANNUHOU:callback(function (spell, logic)
+    if addSpellStat == "破胆怒吼" then
+        target = Aurora.UnitManager:Get("target")
+        if spell:ready() and spell:isknown() and player.distanceto(target) <= 8 then
+            return spell:cast(target)
+        end
+    end
+end)
 
 spellbooks.spells.JIJIENAHAN:callback(function(spell, logic)
     -- print("集结呐喊")
@@ -733,7 +723,7 @@ spellbooks.spells.LEIMINGZHIHOU:callback(function(spell, logic)
         if spell:isknown() and spell:ready() then
             return spell:cast(player)
         else
-            isLoop = true;
+            isLoop = true
         end
     end
     --雷鸣之吼
@@ -763,7 +753,8 @@ end)
 
 spellbooks.spells.QUANJI:callback(function(spell, logic)
     --  print("自动打断")
-    if autoQuanji and spellbooks.spells.QUANJI:ready() then
+    local activeenemies = Aurora.activeenemies
+    if autoQuanji and spell:ready() then
        
         target = Aurora.UnitManager:Get("target")
         focus = Aurora.UnitManager:Get("focus")
@@ -774,21 +765,35 @@ spellbooks.spells.QUANJI:callback(function(spell, logic)
             return spell:cast(focus)
         end
 
-        local activeenemies = Aurora.activeenemies
+        
         if activeenemies and not focus.exists then
         activeenemies:each(function(enemy, index, uptime)
             -- print("进战斗的怪",enemy.name)
-            if enemy.castinginterruptible and enemy.exists and enemy.distanceto(player) <= 4 and player.haslos(enemy) and enemy.enemy and enemy.alive and enemy.playerfacing180 and enemy.castingpct >= 50 then
+            if enemy.castinginterruptible and enemy.exists and enemy.distanceto(player) <= 4 and player.haslos(enemy) and enemy.enemy and enemy.alive and enemy.playerfacing180 and enemy.castingpct >= 30 then
                 spell:cast(enemy)
                 return true -- break the loop
             end
-            if enemy.channelinginterruptible and enemy.exists and enemy.distanceto(player) <= 4 and player.haslos(enemy) and enemy.enemy and enemy.alive and enemy.playerfacing180 and enemy.channelingpct >= 50 then
+            if enemy.channelinginterruptible and enemy.exists and enemy.distanceto(player) <= 4 and player.haslos(enemy) and enemy.enemy and enemy.alive and enemy.playerfacing180 and enemy.channelingpct >= 10 then
                 spell:cast(enemy)
                 return true -- break the loop
             end
             end)    
         end
     end
+    --特殊处理终极失真
+    if spell:ready() then
+        if activeenemies then
+            activeenemies:each(function(enemy, index, uptime)
+                if enemy.castinginterruptible and enemy.castingspellid == 1214780 and enemy.exists and enemy.distanceto(player) <= 4 and player.haslos(enemy) and enemy.enemy and enemy.alive and enemy.playerfacing180 and enemy.castingpct >= 30  then
+                    return spell:cast(enemy)
+                end
+                if enemy.channelinginterruptible and enemy.channelingspellid == 1214780 and enemy.exists and enemy.distanceto(player) <= 4 and player.haslos(enemy) and enemy.enemy and enemy.alive and enemy.playerfacing180 and enemy.channelingpct >= 10  then
+                    return spell:cast(enemy)
+                end
+            end)
+        end
+    end
+
 end)
 
 spellbooks.spells.FASHUFANSHE:callback(function(spell, logic)
@@ -833,6 +838,7 @@ local function loop()
   injuryResponse()
   if spells.QUANJI:execute() then return true end
   if spells.CHAOFENG:execute() then return true end
+  if spells.PODANNUHOU:execute() then return true end
   if spells.TIANSHENXIAFAN:execute() then return true end
   if spells.CUOZHINUHOU:execute() then return true end
   if spells.DUNQIANG:execute() then return true end
@@ -918,7 +924,6 @@ Aurora:RegisterRoutine(function()
 end, "WARRIOR", 3, "Mia_Warrior")
 
 
--- /Aurora Feidun 
 
 
 Aurora.EventHandler:RegisterEvent("SPELL_CAST_SUCCESS", function(eventData)
