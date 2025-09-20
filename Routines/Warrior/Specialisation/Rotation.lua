@@ -335,6 +335,9 @@ local reflectionSpell = {
     338003,--[邪恶箭矢]
     328322,--[罪邪箭]
     323538,--[心能箭矢]
+    326829,--[心能箭矢]
+    323437,--[心能箭矢]
+    328791,
 
     352796,--[代理打击]
     355641,--[闪烁]
@@ -352,6 +355,7 @@ local reflectionSpell = {
     451113,--[蛛网箭]
     451117,--[恐惧猛击]
     427001,--[恐惧猛击]
+    428086,
 
     448492,--[雷霆一击]
     427357,--[神圣惩击]
@@ -361,6 +365,8 @@ local reflectionSpell = {
     435165,--[炽热打击]
     423536,--[神圣惩击]
     427470,--[神圣惩击]
+    448515,--[神圣审判]
+    427950,--[隐修院 烈焰]
 
     469478,--[淤泥之爪]
     473351,--[电气重碾]
@@ -379,7 +385,6 @@ local function isTargetBehind(spell, distance)
         if not target.playerfacing180 or target.distanceto(player) > distance or spell:castable(target) then
             Aurora.activeenemies:each(function(enemy, index, uptime)
                 if enemy.playerfacing180 and enemy.distanceto(player) <= distance and spell:castable(enemy) then
-                    -- isJiaJian = false
                     -- print("切目标斩杀")
                     return spell:cast(enemy)
                 end
@@ -393,17 +398,13 @@ end
 
 local function isCooldown()
     local avgTTD = Aurora.groupttd()
-    -- print("avgTTD",avgTTD)
     if avgTTD > iscdsTime then
-        -- Use longer cooldowns
         iscds = true
         return true
     else 
         iscds = false
         return false
-        -- Use burst abilities
     end
-
 end
 
 local function isBaofayao()
@@ -421,12 +422,10 @@ local function injuryResponse()
                     -- print("正在施法",enemyCastingId)
                     for k, v in pairs(respondSpells) do
                         if v == enemyCastingId then
-                            
                                 if yingdui then
                                     yingdui:cast(player)
                                 end
                                 return true
-                            
                         end
                     end
                 end
@@ -486,10 +485,10 @@ end)
 
 spellbooks.spells.LEITINGYIJI:callback(function(spell, logic)
     -- print("雷霆一击",isLT)
-    if player.enemiesaround(10) >= 1 and isLT then
+    if player.enemiesaround(8) >= 1 and isLT then
         return spell:cast(player)
     end
-    if not spellbooks.spells.DUNPAIMENGJI:ready() and player.enemiesaround(10) >= 1 then
+    if not spellbooks.spells.DUNPAIMENGJI:ready() and player.enemiesaround(8) >= 1 then
         -- print("盾猛击cd中")
         return spell:cast(player)
     end
@@ -837,6 +836,7 @@ local function loop()
 
   injuryResponse()
   if spells.QUANJI:execute() then return true end
+  if spells.YINGYONGTOUZHI:execute() then return true end
   if spells.CHAOFENG:execute() then return true end
   if spells.PODANNUHOU:execute() then return true end
   if spells.TIANSHENXIAFAN:execute() then return true end
@@ -1200,12 +1200,64 @@ end, "天神下凡")
 
 
 Aurora.Macro:RegisterCommand("cast", function(spell)
-    print("插入技能:",spell)
-    if spell then
+    
+    if spell and player.combat then
+        print("插入技能:",spell)
         addSpellStat = spell
         castedCount = 0
     end
 end, "Casts the specified spell")
+
+-- 实现类似JavaScript的setTimeout功能
+-- 参数：
+--   delayMs: 延迟时间（毫秒）
+--   callback: 延迟后执行的回调函数
+-- 返回值：
+--   返回一个timerId，可用于clearTimeout取消定时器
+-- local function setTimeout(delayMs, callback)
+--     if type(callback) ~= "function" then
+--         error("setTimeout: 第二个参数必须是函数")
+--         return nil
+--     end
+    
+--     local delaySeconds = delayMs / 1000 -- 转换为秒
+--     local startTime = os.clock()
+--     local timerId
+    
+--     timerId = Aurora:OnUpdate(function()
+--         local elapsedTime = os.clock() - startTime
+--         if elapsedTime >= delaySeconds then
+--             Aurora:RemoveCallback(timerId, true)
+--             callback()
+--         end
+--     end)
+    
+--     return timerId
+-- end
+
+-- -- 取消setTimeout设置的定时器
+-- -- 参数：
+-- --   timerId: 通过setTimeout返回的定时器ID
+-- local function clearTimeout(timerId)
+--     if timerId then
+--         Aurora:RemoveCallback(timerId, true)
+--     end
+-- end
+
+
+-- Macro:RegisterCommand("close", function(time,options)
+--     print("关闭:",time,options)
+--     if time and options then
+--         local timer = setTimeout(tonumber(time), function()
+--             if options == "天神下凡" then
+--                 autoTianshen = false
+--                 autoTianshen_toggle:SetValue(autoTianshen)
+--                 print("天神下凡已关闭")
+--             end
+--             -- clearTimeout(timer)
+--         end)
+--     end
+-- end, "关闭指定选项，例如天神下凡")
 
 
 InitConfig()
