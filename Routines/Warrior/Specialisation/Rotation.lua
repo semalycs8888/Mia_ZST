@@ -124,6 +124,11 @@ local baofayao = true
 local shengmingyao = true
 local shengmingyaoyuzhi = 20
 
+local isFbaoSp = true
+--用户设置血量阈值
+local healthDq = 20
+local healthPf = 20
+
 local gui = Aurora.GuiBuilder:New()
 gui:Category("Mia_Warrior")
    :Tab("常规")
@@ -199,6 +204,30 @@ gui:Category("Mia_Warrior")
             iscdsTime = value
         end
    })
+   :Header({ text = "盾墙,破釜沉舟血量应对(设置为0时,关闭对应功能)" })
+   :Slider({
+        text = "血量低于设定值,开启盾墙",
+        key = "graphics.healthDq",
+        min = 0,
+        max = 90,
+        default = 20,
+        onChange = function(self, value)
+            -- print("战斗时长低于设置秒数,不开启:", value)
+            healthDq = value
+        end
+   })
+   :Slider({
+        text = "血量低于设定值,开启破釜沉舟",
+        key = "graphics.healthPf",
+        min = 0,
+        max = 90,
+        default = 20,
+        onChange = function(self, value)
+            -- print("战斗时长低于设置秒数,不开启:", value)
+            healthDq = value
+        end
+   })
+
    :Tab("功能")
     :Checkbox({
     text = "道具战复（鼠标指向）",
@@ -211,13 +240,23 @@ gui:Category("Mia_Warrior")
     end
    })
     :Checkbox({
-    text = "天神自动使用[淬火药水3星]",
+    text = "天神自动使用[淬火药水]",
     key = "feature.baofayao",  -- Config key for saving
     default = true,          -- Default value
-    tooltip = "开启后会自动使用爆发药，需要有[淬火药水3星]", -- Optional tooltip
+    tooltip = "开启后会自动使用爆发药，需要有[淬火药水]", -- Optional tooltip
     onChange = function(self, checked)
         -- print("Checkbox changed:", checked)
         baofayao = not baofayao
+    end
+   })
+    :Checkbox({
+    text = "风暴之锤打断回响哨兵，天街打开牢笼，水闸装弹",
+    key = "feature.isFbaoSp",  -- Config key for saving
+    default = true,          -- Default value
+    tooltip = "风暴之锤打断回响哨兵，天街打开牢笼，水闸装弹", -- Optional tooltip
+    onChange = function(self, checked)
+        -- print("Checkbox changed:", checked)
+        isFbaoSp = not isFbaoSp
     end
    })
 
@@ -246,6 +285,10 @@ gui:Category("Mia_Warrior")
 
 
    local function InitConfig()
+    --用户设置血量阈值
+    healthDq = Aurora.Config:Read("graphics.healthDq")
+    healthPf = Aurora.Config:Read("graphics.healthPf")
+    isFbaoSp = Aurora.Config:Read("feature.isFbaoSp")
     shengmingyaoyuzhi = Aurora.Config:Read("feature.shengmingyaoyuzhi")
     mouseoverfuhuo = Aurora.Config:Read("feature.mouseoverfuhuo")
     baofayao = Aurora.Config:Read("feature.baofayao")
@@ -281,7 +324,7 @@ local isLoop = true
 local battleResurrection = Aurora.ItemHandler.NewItem(221955)
 local weaponEnhancement = Aurora.ItemHandler.NewItem(224107)
 local fuwen = Aurora.ItemHandler.NewItem(243191)
-local baofayaopostion = Aurora.ItemHandler.NewItem(212265)
+-- local baofayaopostion = Aurora.ItemHandler.NewItem(212265)
 
 local isLT = true
 local autopohuaizhe = false
@@ -377,6 +420,12 @@ local reflectionSpell = {
     1214468
 }
 
+local fbaoSpells = {
+    461796,
+    347721,
+    432967
+}
+
 
 --判断目标在不在面向内，如果不在选择面向内的目标施法
 local function isTargetBehind(spell, distance)
@@ -407,9 +456,17 @@ local function isCooldown()
     end
 end
 
+local baofayaoList = {
+    baofayao1 = Aurora.ItemHandler.NewItem(212265),
+    baofayao2 = Aurora.ItemHandler.NewItem(212264),
+    baofayao3 = Aurora.ItemHandler.NewItem(212263)
+}
+
 local function isBaofayao()
-    if baofayaopostion:isknown() and baofayaopostion:ready() and baofayaopostion:usable(player) and baofayao and player.aura(107574) and player.auraremains(107574) >= 8 then
-         return baofayaopostion:use(player)
+    for k,v in pairs(baofayaoList) do
+        if v:isknown() and v:ready() and v:usable(player) and player.aura(107574) and player.auraremains(107574) >= 8 and baofayao then
+            return v:use(player)
+        end
     end
 end
 
@@ -474,12 +531,25 @@ spellbooks.spells.DUNQIANG:callback(function(spell, logic)
         yingdui = spell
         -- return true
     end
+
+    if healthDq > 0 then
+        if player.hp <= healthDq and not player.aura(871) then
+            return spell:cast(player)
+        end
+    end
+
 end)
+
 
 spellbooks.spells.POFUCHENZHOU:callback(function(spell, logic)
     if isPOFUCHENZHOU and spell:ready() and yingdui == nil then
         yingdui = spell
         -- return true
+    end
+    if healthPf > 0 then
+        if player.hp <= healthPf and not player.aura(871) then
+            return spell:cast(player)
+        end
     end
 end)
 
@@ -714,6 +784,28 @@ spellbooks.spells.FANGBAOZHICHUI:callback(function(spell, logic)
         end
         -- return spell:cast(player)
     end
+
+    --回响哨兵，打开牢笼 347721  水闸炸弹461796
+    if isFbaoSp then
+         if spell:ready() then
+            local activeenemies = Aurora.activeenemies
+            if activeenemies then
+                activeenemies:each(function(enemy, index, uptime)
+                    if enemy.casting then
+                        if enemy.castingremains <= 1.5 then
+                            for k, v in pairs(fbaoSpells) do
+                                if enemy.castingspellid == v then
+                                    spell:cast(enemy)
+                                return true
+                            end
+                        end
+                    end
+                end
+                end)  
+            end
+        end
+    end
+
 end)
 
 spellbooks.spells.LEIMINGZHIHOU:callback(function(spell, logic)
@@ -828,9 +920,7 @@ end)
 
 local spellbook = Aurora.SpellHandler.Spellbooks.warrior["3"].Mia_Warrior
 local spells = spellbook.spells
-local healthPotion1 = Aurora.ItemHandler.NewItem(244839)
-local healthPotion2 = Aurora.ItemHandler.NewItem(244838)
-local healthPotion3 = Aurora.ItemHandler.NewItem(244835)
+
 
 local function loop()
 
@@ -875,7 +965,6 @@ end
 --鼠标指向战复（道具）
 local function resurrectionInBattle()
     mouseover = Aurora.UnitManager:Get("mouseover")
-    -- print("鼠标指向战复（道具）",battleResurrection:isknown(),battleResurrection:ready())
     if mouseover.exists and mouseover.friend and mouseover.dead and player.distanceto(mouseover) <= 3 and battleResurrection:isknown() and battleResurrection:ready() and mouseoverfuhuo then
         isLoop = false
         battleResurrection:use(mouseover,function ()
@@ -893,6 +982,21 @@ local function battleReady()
     end
 end
 
+local healthItemList = {
+    healthPotion1 = Aurora.ItemHandler.NewItem(244839),
+    healthPotion2 = Aurora.ItemHandler.NewItem(244838),
+    healthPotion3 = Aurora.ItemHandler.NewItem(244835),
+    zhiliaoshi = Aurora.ItemHandler.NewItem(5512)
+}
+
+local function healthItem()
+    for k, v in pairs(healthItemList) do
+        if v:isknown() and v:ready() and v:usable(player) and player.hp < shengmingyaoyuzhi then
+            v:use(player)
+        end
+    end
+end
+
 Aurora:RegisterRoutine(function()
     -- print("战斗外逻辑")
     -- Run appropriate function based on combat status
@@ -903,15 +1007,7 @@ Aurora:RegisterRoutine(function()
     -- print(target.distanceto(player))
     if isLoop then
         if player.combat then
-            if healthPotion1:isknown() and healthPotion1:ready() and healthPotion1:usable(player) and player.hp < shengmingyaoyuzhi then
-                    healthPotion1:use(player)
-            end
-            if healthPotion2:isknown() and healthPotion2:ready() and healthPotion2:usable(player) and player.hp < shengmingyaoyuzhi then
-                    healthPotion2:use(player)
-            end
-            if healthPotion3:isknown() and healthPotion3:ready() and healthPotion3:usable(player) and player.hp < shengmingyaoyuzhi then
-                    healthPotion3:use(player)
-            end
+            healthItem()
             isBaofayao()
             loop()
         else
