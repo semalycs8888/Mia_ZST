@@ -381,6 +381,7 @@ local reflectionSpell = {
     326829,--[心能箭矢]
     323437,--[心能箭矢]
     328791,
+    
 
     352796,--[代理打击]
     355641,--[闪烁]
@@ -398,7 +399,7 @@ local reflectionSpell = {
     451113,--[蛛网箭]
     451117,--[恐惧猛击]
     427001,--[恐惧猛击]
-    428086,
+   -- 428086,
 
     448492,--[雷霆一击]
     427357,--[神圣惩击]
@@ -409,7 +410,8 @@ local reflectionSpell = {
     423536,--[神圣惩击]
     427470,--[神圣惩击]
     448515,--[神圣审判]
-    427950,--[隐修院 烈焰]
+    
+    423015,
 
     469478,--[淤泥之爪]
     473351,--[电气重碾]
@@ -418,6 +420,11 @@ local reflectionSpell = {
     466190,--[雷霆重拳]
     468631,
     1214468
+}
+local reflectionSpellsAny = {
+    427950,--[隐修院 烈焰]
+    323414,
+    423015
 }
 
 local fbaoSpells = {
@@ -756,8 +763,8 @@ spellbooks.spells.JIJIENAHAN:callback(function(spell, logic)
     if addSpellStat == "集结呐喊" then
         if spell:ready() then
             return spell:cast(player)
-        else
-            isLoop = true;
+        -- else
+        --     isLoop = true;
         end
     end
 end)
@@ -767,8 +774,8 @@ spellbooks.spells.ZHENDANGBO:callback(function(spell, logic)
     if addSpellStat == "震荡波" then
         if spell:ready() and spell:isknown() then
             return spell:cast(player)
-        else
-            isLoop = true;
+        -- else
+        --     isLoop = true;
         end
     end
 end)
@@ -779,8 +786,8 @@ spellbooks.spells.FANGBAOZHICHUI:callback(function(spell, logic)
         target = Aurora.UnitManager:Get("target")
         if target.exists and target.enemy and player.distanceto(target) <= 20 and spell:ready() and spell:isknown() then
             return spell:cast(target)
-        else
-            isLoop = true;
+        -- else
+        --     isLoop = true;
         end
         -- return spell:cast(player)
     end
@@ -794,7 +801,7 @@ spellbooks.spells.FANGBAOZHICHUI:callback(function(spell, logic)
                     if enemy.casting then
                         if enemy.castingremains <= 1.5 then
                             for k, v in pairs(fbaoSpells) do
-                                if enemy.castingspellid == v then
+                                if enemy.castingspellid == v and player.distanceto(enemy) <= 20 and player.haslos(enemy) and enemy.playerfacing180 then
                                     spell:cast(enemy)
                                 return true
                             end
@@ -813,8 +820,8 @@ spellbooks.spells.LEIMINGZHIHOU:callback(function(spell, logic)
     if addSpellStat == "雷鸣之吼" then
         if spell:isknown() and spell:ready() then
             return spell:cast(player)
-        else
-            isLoop = true
+        -- else
+        --     isLoop = true
         end
     end
     --雷鸣之吼
@@ -894,25 +901,25 @@ spellbooks.spells.FASHUFANSHE:callback(function(spell, logic)
             local activeenemies = Aurora.activeenemies
             if activeenemies then
                 activeenemies:each(function(enemy, index, uptime)
-                    -- print("读条怪，目标：",enemy.name,enemy.casttarget,player)
                     if enemy.casting then
-                        -- print("here")
                         if enemy.castingremains <= 1 and enemy.casttarget.name == player.name then
-                            -- print("读条时间：",enemy.castingremains,enemy.castingspellid,enemy.casttarget.name)
-                            -- print("玩家名字：",player.name)
                             for k, v in pairs(reflectionSpell) do
                                 if enemy.castingspellid == v then
-                                    spell:cast(player)
-                                return true
+                                   return spell:cast(player)
+                                end
                             end
+                        elseif enemy.castingremains <= 1 then
+                            for k, v in pairs(reflectionSpellsAny) do
+                                if enemy.castingspellid == v then
+                                   return spell:cast(player)
+                                end
+                            end 
                         end
                     end
-                end
-                end)    
-                -- return spell:cast(player)
+                end)
             end
-        else
-            isLoop = true;
+        -- else
+        --     isLoop = true;
         end
     end
 end)
