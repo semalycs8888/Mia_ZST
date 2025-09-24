@@ -154,8 +154,8 @@ function TZList:SaveData()
     end
     
     local dataString = table.concat(self.itemList, ";")
-    print("configKey:", configKey)
-    print("dataString:", dataString)
+    -- print("configKey:", configKey)
+    -- print("dataString:", dataString)
     Aurora.Config:Write(configKey, dataString)
     if configKey == "jianshangyingdui" then
         Aurora.respondSpells = self.itemList
