@@ -401,26 +401,26 @@ gui:Category("Mia_Warrior")
    local function InitConfig()
     local jslb = Aurora.Config:Read("jianshangyingdui")
     if jslb then
-        print("减伤应对列表:", jslb)
+        -- print("减伤应对列表:", jslb)
         Aurora.respondSpells = {}
         for item in string.gmatch(jslb, "([^;]+)") do
             table.insert(Aurora.respondSpells, item)
         end
     else
-        print("未创建列表")
+        -- print("未创建列表")
         local dataString = table.concat(Aurora.respondSpells, ";")
         Aurora.Config:Write("jianshangyingdui", dataString)
     end
     -- 法术反射应对列表
     local fsfslb = Aurora.Config:Read("fashufansheyingdui")
     if fsfslb then
-        print("法术反射应对列表:", fsfslb)
+        -- print("法术反射应对列表:", fsfslb)
         Aurora.reflectionSpells = {}
         for item in string.gmatch(fsfslb, "([^;]+)") do
             table.insert(Aurora.reflectionSpells, item)
         end
     else
-        print("未创建列表")
+        -- print("未创建列表")
         local dataString = table.concat(Aurora.reflectionSpells, ";")
         Aurora.Config:Write("fashufansheyingdui", dataString)
     end
