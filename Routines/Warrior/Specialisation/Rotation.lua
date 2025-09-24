@@ -2,6 +2,11 @@ Mia_Warrior = Mia_Warrior or {}
 
 local NewSpell = Aurora.SpellHandler.NewSpell
 local Macro = Aurora.Macro
+-- 初始化TZList模块
+if not Aurora.TZList then
+    require "tzList"
+end
+local TZList = Aurora.TZList or {}
 
 local spellbooks = {
     spells = {
@@ -128,6 +133,94 @@ local isFbaoSp = true
 --用户设置血量阈值
 local healthDq = 20
 local healthPf = 20
+-- 将respondSpells添加到Aurora全局表，使其可以在其他文件中访问
+Aurora.respondSpells = Aurora.respondSpells or {
+    1237071,--石拳
+    438877,
+    438471,
+    438476,
+    459799,--水闸1号尖刺
+    469478,--水闸老2尖刺
+    473351,--老大娘尖刺
+    465666,--水闸火花猛击
+    466190,--水闸尾王尖刺
+    448485,--隐修院盾牌猛击
+    427897,--隐修院 热浪
+    427950,--隐修院 烈焰
+    448515,--隐修院 神圣审判
+    424414,--隐修院 贯穿护甲
+    448791,--隐修院 敲钟
+    435165,--隐修院 炽热打击
+    431491,--破晨 流血
+    453212,--破晨 老1
+    427001,--破晨 老2
+    451117,--破晨 第一个大怪尖刺
+    355048,--宏图 破壳猛击
+    356133,--宏图 激怒
+    352796,--天街 代理打击
+    349934,--天街 老2
+    355477,--天街 脚踢
+    1240912,--天街 穿刺
+    350916,--天街 保安
+    359028,--天街 老3
+    322936,--赎罪 老1
+    1235766,--赎罪 致死
+    1235368,--圆顶 大怪
+    1219482,--圆顶 老2
+    1222341--圆顶 幽暗
+
+}
+Aurora.reflectionSpells = {
+    1231224,--[奥术猛袭]
+    1222815,--[奥术箭]
+    1222341,--[幽暗之咬]
+
+    338003,--[邪恶箭矢]
+    328322,--[罪邪箭]
+    323538,--[心能箭矢]
+    326829,--[心能箭矢]
+    323437,--[心能箭矢]
+    328791,
+    
+
+    352796,--[代理打击]
+    355641,--[闪烁]
+
+    355225,--[水箭]
+    356843,--[盐渍飞弹]
+    354297,--[凌光箭]
+
+    434786,--[蛛网箭]
+    436322,--[毒液箭]
+    1241693,--[虫群风暴]
+
+    431303,--[暗夜箭]
+    453212,--[黑曜光束]
+    451113,--[蛛网箭]
+    451117,--[恐惧猛击]
+    427001,--[恐惧猛击]
+   -- 428086,
+
+    448492,--[雷霆一击]
+    427357,--[神圣惩击]
+    427469,--[火球术]
+    424421,--[火球术]
+    448791,--[神圣鸣罪]
+    435165,--[炽热打击]
+    423536,--[神圣惩击]
+    427470,--[神圣惩击]
+    448515,--[神圣审判]
+    
+    423015,
+
+    469478,--[淤泥之爪]
+    473351,--[电气重碾]
+    465871,--[鲜血冲击]
+    465666,--[火花猛击]
+    466190,--[雷霆重拳]
+    468631,
+    1214468
+}
 
 local gui = Aurora.GuiBuilder:New()
 gui:Category("Mia_Warrior")
@@ -163,6 +256,26 @@ gui:Category("Mia_Warrior")
         isPOFUCHENZHOU = not isPOFUCHENZHOU
     end
    })
+   :Button({
+        text = "减伤应对列表",
+        width = 120,      -- Optional
+        height = 25,      -- Optional
+        tooltip = "减伤应对列表", -- Optional tooltip
+        key = "jianshangyingdui",
+        onClick = function() 
+            TZList:createList("jianshangyingdui")
+        end
+    })
+    :Button({
+        text = "法术反射应对列表",
+        width = 120,      -- Optional
+        height = 25,      -- Optional
+        tooltip = "法术反射应对列表", -- Optional tooltip
+        key = "fashufansheyingdui",
+        onClick = function() 
+            TZList:createList("fashufansheyingdui")
+        end
+    })
    :Header({ text = "无视苦痛" })
    :Dropdown({
         text = "无视苦痛阈值",
@@ -282,9 +395,35 @@ gui:Category("Mia_Warrior")
             shengmingyaoyuzhi = value
         end
    })
+   
 
 
    local function InitConfig()
+    local jslb = Aurora.Config:Read("jianshangyingdui")
+    if jslb then
+        print("减伤应对列表:", jslb)
+        Aurora.respondSpells = {}
+        for item in string.gmatch(jslb, "([^;]+)") do
+            table.insert(Aurora.respondSpells, item)
+        end
+    else
+        print("未创建列表")
+        local dataString = table.concat(Aurora.respondSpells, ";")
+        Aurora.Config:Write("jianshangyingdui", dataString)
+    end
+    -- 法术反射应对列表
+    local fsfslb = Aurora.Config:Read("fashufansheyingdui")
+    if fsfslb then
+        print("法术反射应对列表:", fsfslb)
+        Aurora.reflectionSpells = {}
+        for item in string.gmatch(fsfslb, "([^;]+)") do
+            table.insert(Aurora.reflectionSpells, item)
+        end
+    else
+        print("未创建列表")
+        local dataString = table.concat(Aurora.reflectionSpells, ";")
+        Aurora.Config:Write("fashufansheyingdui", dataString)
+    end
     --用户设置血量阈值
     healthDq = Aurora.Config:Read("graphics.healthDq")
     healthPf = Aurora.Config:Read("graphics.healthPf")
@@ -333,94 +472,9 @@ local autoyongshizhimao = false
 
 
  --应对减伤
-local respondSpells = {
-    1237071,--石拳
-    438877,
-    438471,
-    438476,
-    459799,--水闸1号尖刺
-    469478,--水闸老2尖刺
-    473351,--老大娘尖刺
-    465666,--水闸火花猛击
-    466190,--水闸尾王尖刺
-    448485,--隐修院盾牌猛击
-    427897,--隐修院 热浪
-    427950,--隐修院 烈焰
-    448515,--隐修院 神圣审判
-    424414,--隐修院 贯穿护甲
-    448791,--隐修院 敲钟
-    435165,--隐修院 炽热打击
-    431491,--破晨 流血
-    453212,--破晨 老1
-    427001,--破晨 老2
-    451117,--破晨 第一个大怪尖刺
-    355048,--宏图 破壳猛击
-    356133,--宏图 激怒
-    352796,--天街 代理打击
-    349934,--天街 老2
-    355477,--天街 脚踢
-    1240912,--天街 穿刺
-    350916,--天街 保安
-    359028,--天街 老3
-    322936,--赎罪 老1
-    1235766,--赎罪 致死
-    1235368,--圆顶 大怪
-    1219482,--圆顶 老2
-    1222341--圆顶 幽暗
 
-}
 
-local reflectionSpell = {
-    1231224,--[奥术猛袭]
-    1222815,--[奥术箭]
-    1222341,--[幽暗之咬]
 
-    338003,--[邪恶箭矢]
-    328322,--[罪邪箭]
-    323538,--[心能箭矢]
-    326829,--[心能箭矢]
-    323437,--[心能箭矢]
-    328791,
-    
-
-    352796,--[代理打击]
-    355641,--[闪烁]
-
-    355225,--[水箭]
-    356843,--[盐渍飞弹]
-    354297,--[凌光箭]
-
-    434786,--[蛛网箭]
-    436322,--[毒液箭]
-    1241693,--[虫群风暴]
-
-    431303,--[暗夜箭]
-    453212,--[黑曜光束]
-    451113,--[蛛网箭]
-    451117,--[恐惧猛击]
-    427001,--[恐惧猛击]
-   -- 428086,
-
-    448492,--[雷霆一击]
-    427357,--[神圣惩击]
-    427469,--[火球术]
-    424421,--[火球术]
-    448791,--[神圣鸣罪]
-    435165,--[炽热打击]
-    423536,--[神圣惩击]
-    427470,--[神圣惩击]
-    448515,--[神圣审判]
-    
-    423015,
-
-    469478,--[淤泥之爪]
-    473351,--[电气重碾]
-    465871,--[鲜血冲击]
-    465666,--[火花猛击]
-    466190,--[雷霆重拳]
-    468631,
-    1214468
-}
 local reflectionSpellsAny = {
     427950,--[隐修院 烈焰]
     323414,
@@ -484,8 +538,8 @@ local function injuryResponse()
                 local enemyCastingId = enemy.castingspellid
                 if enemyCastingId then
                     -- print("正在施法",enemyCastingId)
-                    for k, v in pairs(respondSpells) do
-                        if v == enemyCastingId then
+                    for k, v in pairs(Aurora.respondSpells) do
+                        if tonumber(v) == enemyCastingId then
                                 if yingdui then
                                     yingdui:cast(player)
                                 end
@@ -903,8 +957,8 @@ spellbooks.spells.FASHUFANSHE:callback(function(spell, logic)
                 activeenemies:each(function(enemy, index, uptime)
                     if enemy.casting then
                         if enemy.castingremains <= 1 and enemy.casttarget.name == player.name then
-                            for k, v in pairs(reflectionSpell) do
-                                if enemy.castingspellid == v then
+                            for k, v in pairs(Aurora.reflectionSpells) do
+                                if enemy.castingspellid == tonumber(v) then
                                    return spell:cast(player)
                                 end
                             end
@@ -1362,6 +1416,12 @@ end, "Casts the specified spell")
 --     end
 -- end, "关闭指定选项，例如天神下凡")
 
+-- if TZList then
+--     print("创建打断列表")
+--     print("TZList.test = "..TZList.test)
+--     -- 使用下面的代码可以打开简单列表管理界面
+--     TZList.createList()
+-- end
 
 InitConfig()
 Aurora:RemoveGlobalToggle("rotation_interrupt")

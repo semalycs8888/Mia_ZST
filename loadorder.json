@@ -2,5 +2,6 @@
   "Main",
   "Routines/Warrior/Specialisation/Spellbook",
   "Routines/Warrior/Specialisation/Interface",
+  "Routines/Warrior/Specialisation/tzList",
   "Routines/Warrior/Specialisation/Rotation"
 ]
