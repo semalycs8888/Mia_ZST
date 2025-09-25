@@ -171,7 +171,7 @@ Aurora.respondSpells = Aurora.respondSpells or {
 
 }
 Aurora.reflectionSpells = {
-    1231224,--[奥术猛袭]
+    1235368,--[奥术猛袭]
     1222815,--[奥术箭]
     1222341,--[幽暗之咬]
 
@@ -181,6 +181,9 @@ Aurora.reflectionSpells = {
     326829,--[心能箭矢]
     323437,--[心能箭矢]
     328791,
+    335338,
+    335345,
+    323414,
     
 
     352796,--[代理打击]
@@ -210,8 +213,11 @@ Aurora.reflectionSpells = {
     423536,--[神圣惩击]
     427470,--[神圣惩击]
     448515,--[神圣审判]
+    427950,
+    427951,
     
     423015,
+    446649,--[隐修院 烈焰]
 
     469478,--[淤泥之爪]
     473351,--[电气重碾]
@@ -478,7 +484,13 @@ local autoyongshizhimao = false
 local reflectionSpellsAny = {
     427950,--[隐修院 烈焰]
     323414,
-    423015
+    423015,
+    446649,
+    427951,
+    1235368,
+    328791,
+    335338,
+    335345
 }
 
 local fbaoSpells = {
@@ -964,7 +976,7 @@ spellbooks.spells.FASHUFANSHE:callback(function(spell, logic)
                             end
                         elseif enemy.castingremains <= 1 then
                             for k, v in pairs(reflectionSpellsAny) do
-                                if enemy.castingspellid == v then
+                                if enemy.castingspellid == tonumber(v) then
                                    return spell:cast(player)
                                 end
                             end 
