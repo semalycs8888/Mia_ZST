@@ -933,11 +933,11 @@ spellbooks.spells.QUANJI:callback(function(spell, logic)
         if activeenemies and not focus.exists then
         activeenemies:each(function(enemy, index, uptime)
             -- print("进战斗的怪",enemy.name)
-            if enemy.castinginterruptible and enemy.exists and enemy.distanceto(player) <= 4 and player.haslos(enemy) and enemy.enemy and enemy.alive and enemy.playerfacing180 and enemy.castingpct >= 30 then
+            if enemy.castinginterruptible and enemy.exists and enemy.distanceto(player) <= 4 and player.haslos(enemy) and enemy.enemy and enemy.alive and enemy.playerfacing180 and enemy.castingpct >= 30 and enemy.castingspellid ~= 432031 then
                 spell:cast(enemy)
                 return true -- break the loop
             end
-            if enemy.channelinginterruptible and enemy.exists and enemy.distanceto(player) <= 4 and player.haslos(enemy) and enemy.enemy and enemy.alive and enemy.playerfacing180 and enemy.channelingpct >= 10 then
+            if enemy.channelinginterruptible and enemy.exists and enemy.distanceto(player) <= 4 and player.haslos(enemy) and enemy.enemy and enemy.alive and enemy.playerfacing180 and enemy.channelingpct >= 10 and enemy.channelingspellid ~= 432031 then
                 spell:cast(enemy)
                 return true -- break the loop
             end
