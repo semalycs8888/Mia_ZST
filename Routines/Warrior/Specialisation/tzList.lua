@@ -124,7 +124,7 @@ function TZList:LoadData()
     end
     
     local dataString = Aurora.Config:Read(configKey) or ""
-    
+    -- print("加载数据, configKey:", configKey, "dataString:", dataString)
     self.itemList = {}
     
     if dataString and dataString ~= "" then
@@ -161,6 +161,10 @@ function TZList:SaveData()
         Aurora.respondSpells = self.itemList
     elseif configKey == "fashufansheyingdui" then
         Aurora.reflectionSpells = self.itemList
+    elseif configKey == "ziyouzhufuyingduiList" then
+        Aurora.freeSpells = self.itemList
+    elseif configKey == "mangmuzhiguangyingduiList" then
+        Aurora.controlSpells = self.itemList
     end
 end
 
@@ -267,6 +271,8 @@ function TZList:createList(configKey)
     end
     
     self:Initialize()
+    -- 重要：确保每次调用createList时都重新加载数据，解决第二次点击按钮列表不刷新的问题
+    self:LoadData()
     return self
 end
 
