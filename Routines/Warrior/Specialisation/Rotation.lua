@@ -134,6 +134,9 @@ local isFbaoSp = true
 --用户设置血量阈值
 local healthDq = 20
 local healthPf = 20
+local fbzccontrol = true
+local zdbcontrol = true
+local pdcontrol = true
 -- 将respondSpells添加到Aurora全局表，使其可以在其他文件中访问
 Aurora.respondSpells = Aurora.respondSpells or {
     1237071,--石拳
@@ -228,14 +231,18 @@ Aurora.reflectionSpells = {
     468631,
     1214468
 }
+Aurora.controlSpellsList = {
+    427342
+}
 
 local gui = Aurora.GuiBuilder:New()
 gui:Category("Mia_Warrior")
-   :Tab("regular")
+   :Tab("readme")
    :Header({ text = "/"..Aurora.Macro.baseCommand.." cast [spellName/spellID] English client,use SpellID" })
    :Header({ text = "/"..Aurora.Macro.baseCommand.." cast cursor[spellName/spellID]" })
     :Header({ text = "Do not use SmartQueue to insert skills" })
     :Header({ text = "no need to insert macros for skills without global cooldown" })
+    :Tab("regular")
    :Header({ text = "response to damage reduction abilities" })
    :Checkbox({
     text = "shield wall",
@@ -402,28 +409,58 @@ gui:Category("Mia_Warrior")
     end
     })
     :Header({ text = "resurgent healding potion" })
-
---     :Checkbox({
---     text = "自动使用生命药水(默认有，开关没做)",
---     key = "feature.shengmingyao",  -- Config key for saving
---     default = true,          -- Default value
---     tooltip = "开启后会自动使用生命药", -- Optional tooltip
---     onChange = function(self, checked)
---         -- print("Checkbox changed:", checked)
---         shengmingyao = not shengmingyao
---     end
---    })
    :Slider({
         text = "resurgent healding potion threshold",
         key = "feature.shengmingyaoyuzhi",
         min = 10,
         max = 100,
         default = 20,
+        tooltip = "低于设定血量使用生命药水",
         onChange = function(self, value)
             -- print("使用生命药水阈值:", value)
             shengmingyaoyuzhi = value
         end
    })
+   :Tab("control")
+    :Checkbox({
+        text = "storm bolt",
+        key = "feature.fbzccontrol",  -- Config key for saving
+        default = true,          -- Default value
+        tooltip = "风暴之锤", -- Optional tooltip
+        onChange = function(self, checked)
+            -- print("Checkbox changed:", checked)
+            fbzccontrol = not fbzccontrol
+        end
+    })
+    :Checkbox({
+        text = "shockwave",
+        key = "feature.zdbcontrol",  -- Config key for saving
+        default = true,          -- Default value
+        tooltip = "震荡波", -- Optional tooltip
+        onChange = function(self, checked)
+            -- print("Checkbox changed:", checked)
+            zdbcontrol = not zdbcontrol
+        end
+    })
+    :Checkbox({
+        text = "intimidating shout",
+        key = "feature.pdcontrol",  -- Config key for saving
+        default = true,          -- Default value
+        tooltip = "破胆怒吼", -- Optional tooltip
+        onChange = function(self, checked)
+            -- print("Checkbox changed:", checked)
+            pdcontrol = not pdcontrol
+        end
+    })
+    :Button({
+        text = "control countermeasures list",
+        key = "controlSpellsList",  -- Config key for saving
+        -- default = true,          -- Default value
+        tooltip = "控制技能应对列表", -- Optional toolti
+        onClick = function(self, checked)
+           TZList:createList("controlSpellsList")
+        end
+    })
    
 
 
@@ -453,6 +490,20 @@ gui:Category("Mia_Warrior")
         local dataString = table.concat(Aurora.reflectionSpells, ";")
         Aurora.Config:Write("fashufansheyingdui", dataString)
     end
+
+    -- 控制技能应对列表
+    local cslString = Aurora.Config:Read("controlSpellsList")
+    if cslString then
+        -- print("控制技能应对列表:", controlSpellsList)
+        Aurora.controlSpellsList = {}
+        for item in string.gmatch(cslString, "([^;]+)") do
+            table.insert(Aurora.controlSpellsList, item)
+        end
+    else
+        -- print("未创建列表")
+        local dataString = table.concat(Aurora.controlSpellsList, ";")
+        Aurora.Config:Write("controlSpellsList", dataString)
+    end
     --用户设置血量阈值
     healthDq = Aurora.Config:Read("graphics.healthDq")
     healthPf = Aurora.Config:Read("graphics.healthPf")
@@ -474,6 +525,9 @@ gui:Category("Mia_Warrior")
     end
     isuseTrinket = Aurora.Config:Read("feature.useTrinket")
     useTrinkethp = Aurora.Config:Read("feature.trinketHP")
+    fbzccontrol = Aurora.Config:Read("feature.fbzccontrol")
+    zdbcontrol = Aurora.Config:Read("feature.zdbcontrol")
+    pdcontrol = Aurora.Config:Read("feature.pdcontrol")
 end
    
 
@@ -541,7 +595,40 @@ local function useTrinket()
     end
     
 end
+local function controlexec(spell)
+     local activeenemies = Aurora.activeenemies
+        if activeenemies then
+            activeenemies:each(function(enemy, index, uptime)
+                local enemyCastingId = enemy.castingspellid
+                if enemyCastingId then
+                    -- print("正在施法",enemyCastingId)
+                    for _, v in pairs(Aurora.controlSpellsList) do
+                        if tonumber(v) == enemyCastingId then
+                            if spell == spellbooks.spells.FANGBAOZHICHUI then
+                                if player.distanceto(enemy) <= 20 and player.haslos(enemy) and enemy.playerfacing180 then
+                                   return spell:cast(enemy)
+                                end
+                            end
+                            if spell == spellbooks.spells.ZHENDANGBO then
+                                if player.distanceto(enemy) <= 8 and player.haslos(enemy) and enemy.playerfacing90 then
+                                   return spell:cast(player)
+                                end
+                            end
 
+                            if spell == spellbooks.spells.PODANNUHOU then
+                                if player.distanceto(enemy) <= 8 and player.haslos(enemy) and enemy.playerfacing180 then
+                                   return spell:cast(enemy)
+                                end
+                            end
+                            
+                        end
+                    end
+                end
+            end)
+        end
+
+    
+end
 --判断目标在不在面向内，如果不在选择面向内的目标施法
 local function isTargetBehind(spell, distance)
     target = Aurora.UnitManager:Get("target")
@@ -870,6 +957,11 @@ spellbooks.spells.PODANNUHOU:callback(function (spell, logic)
             return spell:cast(target)
         end
     end
+     if pdcontrol then
+        if spell:isknown() and spell:ready() then
+            controlexec(spell)
+        end
+    end
 end)
 
 spellbooks.spells.JIJIENAHAN:callback(function(spell, logic)
@@ -891,6 +983,11 @@ spellbooks.spells.ZHENDANGBO:callback(function(spell, logic)
             return spell:cast(player)
         -- else
         --     isLoop = true;
+        end
+    end
+     if zdbcontrol then
+        if spell:isknown() and spell:ready() then
+            controlexec(spell)
         end
     end
 end)
@@ -926,6 +1023,11 @@ spellbooks.spells.FANGBAOZHICHUI:callback(function(spell, logic)
                 end
                 end)  
             end
+        end
+    end
+    if fbzccontrol then
+        if spell:isknown() and spell:ready() then
+            controlexec(spell)
         end
     end
 
