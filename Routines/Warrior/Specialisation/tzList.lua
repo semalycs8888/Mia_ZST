@@ -163,7 +163,7 @@ function TZList:SaveData()
         Aurora.reflectionSpells = self.itemList
     elseif configKey == "ziyouzhufuyingduiList" then
         Aurora.freeSpells = self.itemList
-    elseif configKey == "mangmuzhiguangyingduiList" then
+    elseif configKey == "controlSpellsList" then
         Aurora.controlSpells = self.itemList
     end
 end
@@ -188,7 +188,8 @@ function TZList:UpdateListDisplay()
     
     -- 创建新按钮
     for i, itemText in ipairs(self.itemList) do
-        local button = StdUi:Button(self.listFrame.scrollChild, 320, 25, itemText)
+        local spellname = Aurora.dungronSpell[tonumber(itemText)] or "未知"
+        local button = StdUi:Button(self.listFrame.scrollChild, 320, 25, itemText .. "(" .. spellname .. ")")
         button:SetPoint("TOPLEFT", self.listFrame.scrollChild, "TOPLEFT", 5, -((i - 1) * 30))
         
         button:SetScript("OnClick", function()
