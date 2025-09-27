@@ -234,6 +234,16 @@ Aurora.reflectionSpells = {
 Aurora.controlSpellsList = {
     427342
 }
+local cznhicon = Aurora.texture(1160)
+local dqicon = Aurora.texture(871)
+local pfczicon = Aurora.texture(12975)
+local wskticon = Aurora.texture(190456)
+local chysicon = Aurora.texture(212265)
+local fbzcicon = Aurora.texture(107570)
+local zlysicon = Aurora.texture(244839)
+local zdbicon = Aurora.texture(46968)
+local pdnhicon = Aurora.texture(5246)
+local fsfsicon = Aurora.texture(23920)
 
 local gui = Aurora.GuiBuilder:New()
 gui:Category("Mia_Warrior")
@@ -245,7 +255,7 @@ gui:Category("Mia_Warrior")
     :Tab("regular")
    :Header({ text = "response to damage reduction abilities" })
    :Checkbox({
-    text = "shield wall",
+    text = dqicon.."shield wall",
     key = "feature.isDUNQIANG",  -- Config key for saving
     default = true,          -- Default value
     tooltip = "盾墙应对", -- Optional tooltip
@@ -255,7 +265,8 @@ gui:Category("Mia_Warrior")
     end
 })
    :Checkbox({
-    text = "demoralizing shout",
+    text = cznhicon.."demoralizing shout",
+    -- icon = "1160",
     key = "feature.isCUOZHINUHOU",  -- Config key for saving
     default = true,          -- Default value
     tooltip = "挫志怒吼应对", -- Optional tooltip
@@ -265,7 +276,7 @@ gui:Category("Mia_Warrior")
     end
    })
     :Checkbox({
-    text = "last stand",
+    text = pfczicon.."last stand",
     key = "feature.isPOFUCHENZHOU",  -- Config key for saving
     default = true,          -- Default value
     tooltip = "破釜沉舟应对", -- Optional tooltip
@@ -284,6 +295,7 @@ gui:Category("Mia_Warrior")
             TZList:createList("jianshangyingdui")
         end
     })
+    :Header({ text = fsfsicon.."spell reflection" })
     :Button({
         text = "spell reflection response list",
         width = 120,      -- Optional
@@ -294,7 +306,7 @@ gui:Category("Mia_Warrior")
             TZList:createList("fashufansheyingdui")
         end
     })
-   :Header({ text = "ignore pain" })
+   :Header({ text = wskticon.."ignore pain" })
    :Dropdown({
         text = "ignore pain threshold",
         key = "graphics.isIgnoringPain",
@@ -330,6 +342,7 @@ gui:Category("Mia_Warrior")
         min = 10,
         max = 60,
         default = 20,
+        tooltip = "战斗时长低于设置秒数,不开启爆发", -- Optional tooltip
         onChange = function(self, value)
             -- print("战斗时长低于设置秒数,不开启:", value)
             iscdsTime = value
@@ -337,29 +350,31 @@ gui:Category("Mia_Warrior")
    })
    :Header({ text = "health response for shield wall and last stand(set value is 0,disable)" })
    :Slider({
-        text = "shield wall health threshold",
+        text = dqicon.."shield wall health threshold",
         key = "graphics.healthDq",
         min = 0,
         max = 90,
         default = 20,
+        tooltip = "盾墙血量阈值", -- Optional tooltip
         onChange = function(self, value)
             -- print("战斗时长低于设置秒数,不开启:", value)
             healthDq = value
         end
    })
    :Slider({
-        text = "last stand health threshold",
+        text = pfczicon.."last stand health threshold",
         key = "graphics.healthPf",
         min = 0,
         max = 90,
         default = 20,
+        tooltip = "破釜沉舟血量阈值", -- Optional tooltip
         onChange = function(self, value)
             -- print("战斗时长低于设置秒数,不开启:", value)
             healthDq = value
         end
    })
 
-   :Tab("function")
+   :Tab("item")
     :Checkbox({
     text = "CR (mouseover)",
     key = "feature.mouseoverfuhuo",  -- Config key for saving
@@ -380,16 +395,7 @@ gui:Category("Mia_Warrior")
         baofayao = not baofayao
     end
    })
-    :Checkbox({
-    text = "special response for storm bolt",
-    key = "feature.isFbaoSp",  -- Config key for saving
-    default = true,          -- Default value
-    tooltip = "风暴之锤打断回响哨兵，天街打开牢笼，水闸装弹", -- Optional tooltip
-    onChange = function(self, checked)
-        -- print("Checkbox changed:", checked)
-        isFbaoSp = not isFbaoSp
-    end
-   })
+    :Header({ text = "trinket" })
    :Checkbox({
     text = "use trinket",
     key = "feature.useTrinket",  -- Config key for saving
@@ -423,7 +429,7 @@ gui:Category("Mia_Warrior")
    })
    :Tab("control")
     :Checkbox({
-        text = "storm bolt",
+        text = fbzcicon.."storm bolt",
         key = "feature.fbzccontrol",  -- Config key for saving
         default = true,          -- Default value
         tooltip = "风暴之锤", -- Optional tooltip
@@ -432,8 +438,9 @@ gui:Category("Mia_Warrior")
             fbzccontrol = not fbzccontrol
         end
     })
+  
     :Checkbox({
-        text = "shockwave",
+        text = zdbicon.."shockwave",
         key = "feature.zdbcontrol",  -- Config key for saving
         default = true,          -- Default value
         tooltip = "震荡波", -- Optional tooltip
@@ -443,7 +450,7 @@ gui:Category("Mia_Warrior")
         end
     })
     :Checkbox({
-        text = "intimidating shout",
+        text = pdnhicon.."intimidating shout",
         key = "feature.pdcontrol",  -- Config key for saving
         default = true,          -- Default value
         tooltip = "破胆怒吼", -- Optional tooltip
@@ -461,6 +468,17 @@ gui:Category("Mia_Warrior")
            TZList:createList("controlSpellsList")
         end
     })
+    :Header({ text = "special response for storm bolt" })
+    :Checkbox({
+    text = fbzcicon.."special response for storm bolt",
+    key = "feature.isFbaoSp",  -- Config key for saving
+    default = true,          -- Default value
+    tooltip = "风暴之锤打断回响哨兵，天街打开牢笼，水闸装弹", -- Optional tooltip
+    onChange = function(self, checked)
+        -- print("Checkbox changed:", checked)
+        isFbaoSp = not isFbaoSp
+    end
+   })
    
 
 
