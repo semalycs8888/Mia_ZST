@@ -1330,6 +1330,7 @@ Aurora.EventHandler:RegisterEvent("SPELL_CAST_SUCCESS", function(eventData)
         -- print(string.format("Cast %s (ID: %d)", spellName, spellId))
         if spellId == tonumber(addSpellStat) then
             -- isLoop = true
+            -- print("相同技能")
             addSpellStat = nil
             castedCount = 0
         end
