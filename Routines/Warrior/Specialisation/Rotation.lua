@@ -599,15 +599,24 @@ local fbaoSpells = {
 --使用饰品
 local function useTrinket()
     local allEquipped = Aurora.ItemHandler.Armory
+    target = Aurora.UnitManager:Get("target")
     for _, item in pairs(allEquipped) do
         if item.itemSlot == "TRINKET" and item.hasOnUse and item:ready() and item.id ~= 190958 then
             if item.id == 242391 or item.id == 232543 then
                 -- print(player.hp,useTrinkethp)
                 if player.hp < useTrinkethp then
-                    item:use(player)
+                    if item:usable(player) then
+                        item:use(player)
+                    else
+                        item:use(target)
+                    end
                 end
             elseif player.aura(107574) then
-                item:use(player)
+                if item:usable(player) then
+                    item:use(player)
+                else
+                    item:use(target)
+                end
             end
         end
     end
