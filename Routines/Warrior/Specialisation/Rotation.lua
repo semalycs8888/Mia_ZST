@@ -804,8 +804,8 @@ spellbooks.spells.YINGYONGTOUZHI:callback(function(spell, logic)
 end)
 
 spellbooks.spells.YONGSHIZHIMAO:callback(function(spell, logic)
-    if addSpellStat == "cursor勇士之矛" or addSpellStat == "cursor376079" then
-        addSpellStat = "cursor勇士之矛"
+    if addSpellStat == "cursor勇士之矛" or addSpellStat == "376079" then
+        addSpellStat = "376079"
         if spell:isknown() and spell:ready() then
             return spell:castcursor()
         end
@@ -830,7 +830,7 @@ spellbooks.spells.YONGSHIZHIMAO:callback(function(spell, logic)
 end)
 spellbooks.spells.POHUAIZHE:callback(function(spell, logic)
     if addSpellStat == "cursor破坏者" or addSpellStat == "cursor228920" then
-        addSpellStat = "cursor破坏者"
+        addSpellStat = "228920"
         if spell:ready() and spell:isknown() then
             return spell:castcursor()
         end
@@ -902,7 +902,7 @@ end)
 spellbooks.spells.DUNPAICHONGFENG:callback(function(spell, logic)
     -- print("盾牌冲锋")
     if addSpellStat == "盾牌冲锋" or addSpellStat == "385952" then
-        addSpellStat = "盾牌冲锋"
+        addSpellStat = "385952"
         target = Aurora.UnitManager:Get("target")
         if target.exists and target.enemy and player.distanceto(target) <= 25 and spell:ready() and spell:isknown() then
             return spell:cast(target)
@@ -916,7 +916,7 @@ end)
 spellbooks.spells.CUOZHINUHOU:callback(function(spell, logic)
     -- print("挫志怒吼")
     if addSpellStat == "挫志怒吼" or addSpellStat == "1160" then
-        addSpellStat = "挫志怒吼"
+        addSpellStat = "1160"
         if spell:ready() then
             return spell:cast(player)
         end
@@ -978,7 +978,7 @@ end)
 
 spellbooks.spells.PODANNUHOU:callback(function (spell, logic)
     if addSpellStat == "破胆怒吼" or addSpellStat == "5246" then
-        addSpellStat = "破胆怒吼"
+        addSpellStat = "5246"
         target = Aurora.UnitManager:Get("target")
         if spell:ready() and spell:isknown() and player.distanceto(target) <= 8 then
             return spell:cast(target)
@@ -994,7 +994,7 @@ end)
 spellbooks.spells.JIJIENAHAN:callback(function(spell, logic)
     -- print("集结呐喊")
     if addSpellStat == "集结呐喊" or addSpellStat == "97462" then
-        addSpellStat = "集结呐喊"
+        addSpellStat = "97462"
         if spell:ready() then
             return spell:cast(player)
         -- else
@@ -1005,7 +1005,8 @@ end)
 
 spellbooks.spells.ZHENDANGBO:callback(function(spell, logic)
     -- print("震荡波")
-    if addSpellStat == "震荡波" then
+    if addSpellStat == "震荡波" or addSpellStat == "46968" then
+        addSpellStat = "46968"
         if spell:ready() and spell:isknown() then
             return spell:cast(player)
         -- else
@@ -1022,7 +1023,7 @@ end)
 spellbooks.spells.FANGBAOZHICHUI:callback(function(spell, logic)
     -- print("风暴之锤")
     if addSpellStat == "风暴之锤" or addSpellStat == "107570" then
-        addSpellStat = "风暴之锤"
+        addSpellStat = "107570"
         target = Aurora.UnitManager:Get("target")
         if target.exists and target.enemy and player.distanceto(target) <= 20 and spell:ready() and spell:isknown() then
             return spell:cast(target)
@@ -1063,7 +1064,7 @@ end)
 spellbooks.spells.LEIMINGZHIHOU:callback(function(spell, logic)
     -- print("雷鸣之吼")
     if addSpellStat == "雷鸣之吼" or addSpellStat == "384318" then
-        addSpellStat = "雷鸣之吼"
+        addSpellStat = "384318"
         if spell:isknown() and spell:ready() then
             return spell:cast(player)
         -- else
@@ -1327,7 +1328,7 @@ Aurora.EventHandler:RegisterEvent("SPELL_CAST_SUCCESS", function(eventData)
             castedCount = 0
         end
         -- print(string.format("Cast %s (ID: %d)", spellName, spellId))
-        if spellName == addSpellStat then
+        if spellId == tonumber(addSpellStat) then
             -- isLoop = true
             addSpellStat = nil
             castedCount = 0
