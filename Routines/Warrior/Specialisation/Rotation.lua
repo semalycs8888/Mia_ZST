@@ -1104,9 +1104,14 @@ spellbooks.spells.QUANJI:callback(function(spell, logic)
         target = Aurora.UnitManager:Get("target")
         focus = Aurora.UnitManager:Get("focus")
         if focus.exists and focus.distanceto(player) <= 4 and player.haslos(focus) and focus.enemy and focus.alive and focus.castinginterruptible and focus.playerfacing180 and focus.castingpct >= 50 then
-             if focus.casttarget.name ~= player.name or (not spellbooks.spells.FASHUFANSHE:ready() and not player.aura(23920)) and not table.contains(Aurora.reflectionSpells,focus.castingspellid) then
+            if isFSFS then
+                if focus.casttarget.name ~= player.name or (not spellbooks.spells.FASHUFANSHE:ready() and not player.aura(23920)) and not table.contains(Aurora.reflectionSpells,focus.castingspellid) then
+                    return spell:cast(focus)
+                end
+            else
                 return spell:cast(focus)
             end
+            
         end
         if focus.exists and focus.distanceto(player) <= 4 and player.haslos(focus) and focus.enemy and focus.alive and focus.channelinginterruptible and focus.playerfacing180 and focus.channelingpct >= 50 then
             return spell:cast(focus)
@@ -1117,7 +1122,11 @@ spellbooks.spells.QUANJI:callback(function(spell, logic)
         activeenemies:each(function(enemy, index, uptime)
             -- print("进战斗的怪",enemy.name)
             if enemy.castinginterruptible and enemy.exists and enemy.distanceto(player) <= 4 and player.haslos(enemy) and enemy.enemy and enemy.alive and enemy.playerfacing180 and enemy.castingpct >= 30 and enemy.castingspellid ~= 432031 then
-                if enemy.casttarget.name ~= player.name or (not spellbooks.spells.FASHUFANSHE:ready() and not player.aura(23920)) and not table.contains(Aurora.reflectionSpells,enemy.castingspellid) then
+                if isFSFS then
+                    if enemy.casttarget.name ~= player.name or (not spellbooks.spells.FASHUFANSHE:ready() and not player.aura(23920)) and not table.contains(Aurora.reflectionSpells,enemy.castingspellid) then
+                        return spell:cast(enemy)
+                    end
+                else
                     return spell:cast(enemy)
                 end
             end
