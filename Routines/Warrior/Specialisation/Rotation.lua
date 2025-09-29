@@ -1163,7 +1163,7 @@ spellbooks.spells.FASHUFANSHE:callback(function(spell, logic)
             if activeenemies then
                 activeenemies:each(function(enemy, index, uptime)
                     if enemy.casting then
-                        if enemy.castingremains <= 1 and enemy.casttarget.name == player.name then
+                        if enemy.castingremains <= 1 and  enemy.casttarget and enemy.casttarget.name and enemy.casttarget.name == player.name then
                             for k, v in pairs(Aurora.reflectionSpells) do
                                 if enemy.castingspellid == tonumber(v) then
                                    return spell:cast(player)
