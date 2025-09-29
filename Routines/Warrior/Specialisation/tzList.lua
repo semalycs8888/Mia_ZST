@@ -189,7 +189,7 @@ function TZList:UpdateListDisplay()
     -- 创建新按钮
     for i, itemText in ipairs(self.itemList) do
         local spellname = Aurora.dungronSpell[tonumber(itemText)] or "未知"
-        local button = StdUi:Button(self.listFrame.scrollChild, 320, 25, itemText .. "(" .. spellname .. ")")
+        local button = StdUi:Button(self.listFrame.scrollChild, 320, 25, Aurora.texture(tonumber(itemText))..itemText .. "(" .. spellname .. ")")
         button:SetPoint("TOPLEFT", self.listFrame.scrollChild, "TOPLEFT", 5, -((i - 1) * 30))
         
         button:SetScript("OnClick", function()
