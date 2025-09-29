@@ -1,0 +1,8 @@
+# 确保所有文本文件使用UTF-8编码
+* text=auto
+
+# 指定Lua文件使用UTF-8编码
+*.lua text encoding=utf-8
+
+# 避免Windows和Unix行尾符转换问题
+* text=auto eol=lf
