@@ -795,7 +795,7 @@ end)
 
 spellbooks.spells.YINGYONGTOUZHI:callback(function(spell, logic)
     if addSpellStat == "英勇投掷" or addSpellStat == "57755" then
-        addSpellStat = "英勇投掷"
+        addSpellStat = "57755"
         target = Aurora.UnitManager:Get("target")
         if target.exists and player.distanceto(target) > 8 and player.haslos(target) and player.distanceto(target) < 30 then
             return spell:cast(target)
@@ -1082,7 +1082,7 @@ end)
 spellbooks.spells.ZHANDOUNUHOU:callback(function(spell, logic)
     -- print("战斗怒吼")
     if addSpellStat == "战斗怒吼" or addSpellStat == "6673" then
-        addSpellStat = "战斗怒吼"
+        addSpellStat = "6673"
         return spell:cast(player)
     end
     --自动战斗怒吼
