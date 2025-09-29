@@ -1,3 +1,4 @@
+-- -*- coding: utf-8 -*-
 Mia_Warrior = Mia_Warrior or {}
 
 local NewSpell = Aurora.SpellHandler.NewSpell
