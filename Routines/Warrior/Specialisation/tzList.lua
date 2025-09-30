@@ -161,8 +161,8 @@ function TZList:SaveData()
         Aurora.respondSpells = self.itemList
     elseif configKey == "fashufansheyingdui" then
         Aurora.reflectionSpells = self.itemList
-    elseif configKey == "ziyouzhufuyingduiList" then
-        Aurora.freeSpells = self.itemList
+    elseif configKey == "interveneList" then
+        Aurora.interveneList = self.itemList
     elseif configKey == "controlSpellsList" then
         Aurora.controlSpells = self.itemList
     end

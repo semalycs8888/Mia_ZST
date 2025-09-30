@@ -82,7 +82,9 @@ local spellbooks = {
         --[瓦解怒吼]386071
         WAJIENUHOU = NewSpell(386071),
         --[破坏者]228920
-        POHUAIZHE = NewSpell(228920)
+        POHUAIZHE = NewSpell(228920),
+        --[援护]3411
+        YUANHU = NewSpell(3411),
     },
     auras = {
         
@@ -138,6 +140,7 @@ local healthPf = 20
 local fbzccontrol = true
 local zdbcontrol = true
 local pdcontrol = true
+local autoyuanhu = true
 -- 将respondSpells添加到Aurora全局表，使其可以在其他文件中访问
 Aurora.respondSpells = Aurora.respondSpells or {
     1237071,--石拳
@@ -235,6 +238,10 @@ Aurora.reflectionSpells = {
 Aurora.controlSpellsList = {
     427342
 }
+
+Aurora.interveneList = {
+    462859
+}
 local cznhicon = Aurora.texture(1160)
 local dqicon = Aurora.texture(871)
 local pfczicon = Aurora.texture(12975)
@@ -245,6 +252,7 @@ local zlysicon = Aurora.texture(244839)
 local zdbicon = Aurora.texture(46968)
 local pdnhicon = Aurora.texture(5246)
 local fsfsicon = Aurora.texture(23920)
+local yuanhuicon = Aurora.texture(3411)
 
 local gui = Aurora.GuiBuilder:New()
 gui:Category("Mia_Warrior")
@@ -471,15 +479,37 @@ gui:Category("Mia_Warrior")
     })
     :Header({ text = "special response for storm bolt" })
     :Checkbox({
-    text = fbzcicon.."special response for storm bolt",
-    key = "feature.isFbaoSp",  -- Config key for saving
-    default = true,          -- Default value
-    tooltip = "风暴之锤打断回响哨兵，天街打开牢笼，水闸装弹", -- Optional tooltip
-    onChange = function(self, checked)
-        -- print("Checkbox changed:", checked)
-        isFbaoSp = not isFbaoSp
-    end
+        text = fbzcicon.."special response for storm bolt",
+        key = "feature.isFbaoSp",  -- Config key for saving
+        default = true,          -- Default value
+        tooltip = "风暴之锤打断回响哨兵，天街打开牢笼，水闸装弹", -- Optional tooltip
+        onChange = function(self, checked)
+            -- print("Checkbox changed:", checked)
+            isFbaoSp = not isFbaoSp
+        end
    })
+--    :Tab("special")
+--     :Checkbox({
+--         text = yuanhuicon.."intervene",
+--         key = "feature.autoyuanhu",  -- Config key for saving
+--         default = true,          -- Default value
+--         tooltip = "援护", -- Optional tooltip
+--         onChange = function(self, checked)
+--             -- print("Checkbox changed:", checked)
+--             autoyuanhu = not autoyuanhu
+--         end
+--    })
+--    :Button({
+--         text = "intervene response list",
+--         key = "interveneList",  -- Config key for saving
+--         -- default = true,          -- Default value
+--         tooltip = "援护应对技能列表", -- Optional tooltip
+
+--         onClick = function(self, checked)
+--             -- print("Checkbox changed:", checked)
+--             TZList:createList("interveneList")
+--         end
+--    })
    
 
 
@@ -523,6 +553,19 @@ gui:Category("Mia_Warrior")
         local dataString = table.concat(Aurora.controlSpellsList, ";")
         Aurora.Config:Write("controlSpellsList", dataString)
     end
+    --援护list
+    -- local yuanhuString = Aurora.Config:Read("interveneList")
+    -- if yuanhuString then
+    --     -- print("援护应对列表:", controlSpellsList)
+    --     Aurora.interveneList = {}
+    --     for item in string.gmatch(yuanhuString, "([^;]+)") do
+    --         table.insert(Aurora.interveneList, item)
+    --     end
+    -- else
+    --     -- print("未创建列表")
+    --     local dataString = table.concat(Aurora.interveneList, ";")
+    --     Aurora.Config:Write("interveneList", dataString)
+    -- end
     --用户设置血量阈值
     healthDq = Aurora.Config:Read("graphics.healthDq")
     healthPf = Aurora.Config:Read("graphics.healthPf")
@@ -547,6 +590,7 @@ gui:Category("Mia_Warrior")
     fbzccontrol = Aurora.Config:Read("feature.fbzccontrol")
     zdbcontrol = Aurora.Config:Read("feature.zdbcontrol")
     pdcontrol = Aurora.Config:Read("feature.pdcontrol")
+    -- autoyuanhu = Aurora.Config:Read("feature.autoyuanhu")
 end
    
 
@@ -724,6 +768,29 @@ spellbooks.spells.TIANSHENXIAFAN:callback(function(spell,logic)
     if autoTianshen and isCooldown() then
         if player.enemiesaround(8) >= 5 or player.speed == 0 then
             return spell:cast(player)
+        end
+    end
+end)
+
+spellbooks.spells.YUANHU:callback(function(spell,logic)
+    -- print("援护")
+    if autoyuanhu then
+        -- local group = Aurora.group
+        local activeenemies = Aurora.activeenemies
+        if activeenemies then
+            activeenemies:each(function(enemy, index, uptime)
+                if enemy.casting then
+                    print(enemy.castingspellid)
+                    for _, v in pairs(Aurora.interveneList) do
+                        if tonumber(v) == enemy.castingspellid and enemy.casttarget then
+                            -- print("援护",enemy.castingspellid,enemy.casttarget.name)
+                            if enemy.casttarget.name ~= player.name then
+                                return spell:cast(enemy.casttarget)
+                            end
+                        end
+                    end
+                end
+            end)
         end
     end
 end)
@@ -1107,7 +1174,7 @@ spellbooks.spells.QUANJI:callback(function(spell, logic)
         focus = Aurora.UnitManager:Get("focus")
         if focus.exists and focus.distanceto(player) <= 4 and player.haslos(focus) and focus.enemy and focus.alive and focus.castinginterruptible and focus.playerfacing180 and focus.castingpct >= 50 then
             if isFSFS then
-                if focus.casttarget.name ~= player.name or (not spellbooks.spells.FASHUFANSHE:ready() and not player.aura(23920)) and not table.contains(Aurora.reflectionSpells,focus.castingspellid) then
+                if (focus.casttarget and focus.casttarget.name ~= player.name) or (not spellbooks.spells.FASHUFANSHE:ready() and not player.aura(23920)) and not table.contains(Aurora.reflectionSpells,focus.castingspellid) then
                     return spell:cast(focus)
                 end
             else
@@ -1125,7 +1192,7 @@ spellbooks.spells.QUANJI:callback(function(spell, logic)
             -- print("进战斗的怪",enemy.name)
             if enemy.castinginterruptible and enemy.exists and enemy.distanceto(player) <= 4 and player.haslos(enemy) and enemy.enemy and enemy.alive and enemy.playerfacing180 and enemy.castingpct >= 30 and enemy.castingspellid ~= 432031 then
                 if isFSFS then
-                    if enemy.casttarget.name ~= player.name or (not spellbooks.spells.FASHUFANSHE:ready() and not player.aura(23920)) and not table.contains(Aurora.reflectionSpells,enemy.castingspellid) then
+                    if (enemy.casttarget and enemy.casttarget.name ~= player.name) or (not spellbooks.spells.FASHUFANSHE:ready() and not player.aura(23920)) and not table.contains(Aurora.reflectionSpells,enemy.castingspellid) then
                         return spell:cast(enemy)
                     end
                 else
@@ -1193,6 +1260,7 @@ local spells = spellbook.spells
 local function loop()
 
   injuryResponse()
+--   if spells.YUANHU:execute() then return true end
   if spells.QUANJI:execute() then return true end
   if spells.YINGYONGTOUZHI:execute() then return true end
   if spells.CHAOFENG:execute() then return true end
