@@ -141,6 +141,10 @@ local fbzccontrol = true
 local zdbcontrol = true
 local pdcontrol = true
 local autoyuanhu = true
+--打断目标
+local interruptstat = "all"
+--打断阈值
+local interruptthreshold = 50
 -- 将respondSpells添加到Aurora全局表，使其可以在其他文件中访问
 Aurora.respondSpells = Aurora.respondSpells or {
     1237071,--石拳
@@ -177,6 +181,15 @@ Aurora.respondSpells = Aurora.respondSpells or {
     1219482,--圆顶 老2
     1222341--圆顶 幽暗
 
+}
+
+Aurora.interruptSpellsblacklist = {
+    326450, 
+    338003, 
+}
+
+Aurora.interruptSpellswhitelist = {
+    1229474,446657,221130,354297,427609,428086,468631,450756,434786,427357,465871,356843,323538,221483,1229510,1214780,356337,434792,357196,1248699,355641,325701,355642,452099,431303,1221532,465595,356407,1245669,353836,462771,1222815,356537,355934,424419,431309,347775,434802,424420,447439,427469,444743,350922,432520,423536,471733,1214468,338003,86813,357260,355225,352347,433841,424421,423051,326829,436322,448248,328322,431333,351119,442210,451113,326450,427356
 }
 Aurora.reflectionSpells = {
     1235368,--[奥术猛袭]
@@ -488,6 +501,61 @@ gui:Category("Mia_Warrior")
             isFbaoSp = not isFbaoSp
         end
    })
+:Tab("interrupt")
+:Dropdown({
+    text = "interrupt target",
+    key = "interruptstat",
+    options = {
+        { text = "All", value = "all" },
+        { text = "Blacklist", value = "blacklist" },
+        { text = "Whitelist", value = "whitelist" }
+    },
+    default = "all",
+    multi = false,           -- Set to true for multi-select
+    width = 200,            -- Optional
+    tooltip = "Select quality level",
+    onChange = function(self, value)
+        interruptstat = value
+    end
+})
+
+:Button({
+    text = "interrupt black list",
+    width = 120,      -- Optional
+    height = 25,      -- Optional
+    tooltip = "打断黑名单", -- Optional tooltip
+    key = "interruptSpellsblacklist",
+    onClick = function() 
+        -- print("clicked") 
+        TZList:createList("interruptSpellsblacklist")
+    end
+})
+:Spacer() 
+:Button({
+    text = "interrupt white list",
+    width = 120,      -- Optional
+    height = 25,      -- Optional
+    tooltip = "打断白名单", -- Optional tooltip
+    key = "interruptSpellswhitelist",
+    onClick = function() 
+        -- print("clicked") 
+        TZList:createList("interruptSpellswhitelist")
+    end
+})
+:Slider({
+    text = "interrupt threshold",
+    key = "feature.interruptthreshold",
+    min = 10,
+    max = 90,
+    step = 1,
+    default = 50,
+    tooltip = "打断阈值", -- Optional tooltip
+    onChange = function(self, value)
+        interruptthreshold = value
+    end
+})
+
+
 --    :Tab("special")
 --     :Checkbox({
 --         text = yuanhuicon.."intervene",
@@ -566,6 +634,33 @@ gui:Category("Mia_Warrior")
     --     local dataString = table.concat(Aurora.interveneList, ";")
     --     Aurora.Config:Write("interveneList", dataString)
     -- end
+    local interruptSpellsblackliststring = Aurora.Config:Read("interruptSpellsblacklist")
+        if interruptSpellsblackliststring then
+            -- print("控制应对列表:", farfromgroup)
+            Aurora.interruptSpellsblacklist = {}
+            for item in string.gmatch(interruptSpellsblackliststring, "([^;]+)") do
+                table.insert(Aurora.interruptSpellsblacklist, item)
+            end
+        else
+            -- print("未创建列表")
+            local dataString = table.concat(Aurora.interruptSpellsblacklist, ";")
+            Aurora.Config:Write("interruptSpellsblacklist", dataString)
+        end
+
+        local interruptSpellswhiteliststring = Aurora.Config:Read("interruptSpellswhitelist")
+        if interruptSpellswhiteliststring then
+            -- print("控制应对列表:", farfromgroup)
+            Aurora.interruptSpellswhitelist = {}
+            for item in string.gmatch(interruptSpellswhiteliststring, "([^;]+)") do
+                table.insert(Aurora.interruptSpellswhitelist, item)
+            end
+        else
+            -- print("未创建列表")
+            local dataString = table.concat(Aurora.interruptSpellswhitelist, ";")
+            Aurora.Config:Write("interruptSpellswhitelist", dataString)
+        end
+
+
     --用户设置血量阈值
     healthDq = Aurora.Config:Read("graphics.healthDq")
     healthPf = Aurora.Config:Read("graphics.healthPf")
@@ -591,6 +686,8 @@ gui:Category("Mia_Warrior")
     zdbcontrol = Aurora.Config:Read("feature.zdbcontrol")
     pdcontrol = Aurora.Config:Read("feature.pdcontrol")
     -- autoyuanhu = Aurora.Config:Read("feature.autoyuanhu")
+    interruptstat = Aurora.Config:Read("feature.interruptstat")
+    interruptthreshold = Aurora.Config:Read("feature.interruptthreshold")
 end
    
 
@@ -1164,6 +1261,42 @@ spellbooks.spells.ZHANDOUNUHOU:callback(function(spell, logic)
         -- return spell:cast(player)
     end
 end)
+local function hasInterruptSpell(spellid, interruptstat)
+    if interruptstat == "blacklist" then
+        for _, v in pairs(Aurora.interruptSpellsblacklist) do
+            if tonumber(v) == spellid then
+                return true
+            end
+        end
+        return false
+    elseif interruptstat == "whitelist" then
+        for _, v in pairs(Aurora.interruptSpellswhitelist) do
+            if tonumber(v) == spellid then
+                return true
+            end
+        end
+        return false
+    end
+  
+end
+
+local function interruptMethod(spell,focus,spellId)
+    if interruptstat == "all" then
+        return spell:cast(focus)
+    end
+    if interruptstat == "blacklist" then
+        print("打断黑名单",hasInterruptSpell(spellId,"blacklist"))
+        if not hasInterruptSpell(spellId,"blacklist") then
+            return spell:cast(focus)
+        end
+    end
+    if interruptstat == "whitelist" then
+        if hasInterruptSpell(spellId,"whitelist") then
+            return spell:cast(focus)
+        end
+    end
+end
+
 
 spellbooks.spells.QUANJI:callback(function(spell, logic)
     --  print("自动打断")
@@ -1172,35 +1305,35 @@ spellbooks.spells.QUANJI:callback(function(spell, logic)
        
         target = Aurora.UnitManager:Get("target")
         focus = Aurora.UnitManager:Get("focus")
-        if focus.exists and focus.distanceto(player) <= 4 and player.haslos(focus) and focus.enemy and focus.alive and focus.castinginterruptible and focus.playerfacing180 and focus.castingpct >= 50 then
+        if focus.exists and focus.distanceto(player) <= 4 and player.haslos(focus) and focus.enemy and focus.alive and focus.castinginterruptible and focus.playerfacing180 and focus.castingpct >= interruptthreshold then
             if isFSFS then
                 if (focus.casttarget and focus.casttarget.name ~= player.name) or (not spellbooks.spells.FASHUFANSHE:ready() and not player.aura(23920)) and not table.contains(Aurora.reflectionSpells,focus.castingspellid) then
-                    return spell:cast(focus)
+                   interruptMethod(spell,focus,focus.castingspellid)
                 end
             else
-                return spell:cast(focus)
+                interruptMethod(spell,focus,focus.castingspellid)
             end
             
         end
-        if focus.exists and focus.distanceto(player) <= 4 and player.haslos(focus) and focus.enemy and focus.alive and focus.channelinginterruptible and focus.playerfacing180 and focus.channelingpct >= 50 then
-            return spell:cast(focus)
+        if focus.exists and focus.distanceto(player) <= 4 and player.haslos(focus) and focus.enemy and focus.alive and focus.channelinginterruptible and focus.playerfacing180 and focus.channelingpct >= 10 then
+            interruptMethod(spell,focus,focus.channelingspellid)
         end
 
         
         if activeenemies and not focus.exists then
         activeenemies:each(function(enemy, index, uptime)
             -- print("进战斗的怪",enemy.name)
-            if enemy.castinginterruptible and enemy.exists and enemy.distanceto(player) <= 4 and player.haslos(enemy) and enemy.enemy and enemy.alive and enemy.playerfacing180 and enemy.castingpct >= 30 and enemy.castingspellid ~= 432031 then
+            if enemy.castinginterruptible and enemy.exists and enemy.distanceto(player) <= 4 and player.haslos(enemy) and enemy.enemy and enemy.alive and enemy.playerfacing180 and enemy.castingpct >= interruptthreshold and enemy.castingspellid ~= 432031 then
                 if isFSFS then
                     if (enemy.casttarget and enemy.casttarget.name ~= player.name) or (not spellbooks.spells.FASHUFANSHE:ready() and not player.aura(23920)) and not table.contains(Aurora.reflectionSpells,enemy.castingspellid) then
-                        return spell:cast(enemy)
+                        interruptMethod(spell,enemy,enemy.castingspellid)
                     end
                 else
-                    return spell:cast(enemy)
+                    interruptMethod(spell,enemy,enemy.castingspellid)
                 end
             end
             if enemy.channelinginterruptible and enemy.exists and enemy.distanceto(player) <= 4 and player.haslos(enemy) and enemy.enemy and enemy.alive and enemy.playerfacing180 and enemy.channelingpct >= 10 and enemy.channelingspellid ~= 432031 then
-                spell:cast(enemy)
+                interruptMethod(spell,enemy,enemy.channelingspellid)
                 return true -- break the loop
             end
             end)    

@@ -165,6 +165,10 @@ function TZList:SaveData()
         Aurora.interveneList = self.itemList
     elseif configKey == "controlSpellsList" then
         Aurora.controlSpells = self.itemList
+    elseif configKey == "interruptSpellsblacklist" then
+        Aurora.interruptSpellsblacklist = self.itemList
+    elseif configKey == "interruptSpellswhitelist" then
+        Aurora.interruptSpellswhitelist = self.itemList
     end
 end
 
