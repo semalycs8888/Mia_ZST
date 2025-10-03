@@ -779,7 +779,7 @@ local function controlexec(spell)
                 if enemy.channeling then
                     enemyCastingId = enemy.channelingspellid
                 end
-                if enemyCastingId then
+                if enemyCastingId ~= 0 then
                     -- print("正在施法",enemyCastingId)
                     for _, v in pairs(Aurora.controlSpellsList) do
                         if tonumber(v) == enemyCastingId then
