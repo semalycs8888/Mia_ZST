@@ -249,7 +249,10 @@ Aurora.reflectionSpells = {
     1214468
 }
 Aurora.controlSpellsList = {
-    427342
+    427342,
+    355640,
+    353783,
+    346980,
 }
 
 Aurora.interveneList = {
@@ -768,7 +771,14 @@ local function controlexec(spell)
      local activeenemies = Aurora.activeenemies
         if activeenemies then
             activeenemies:each(function(enemy, index, uptime)
-                local enemyCastingId = enemy.castingspellid
+                if enemy.casting or enemy.channeling then
+                local enemyCastingId = 0
+                if enemy.casting then
+                    enemyCastingId = enemy.castingspellid
+                end
+                if enemy.channeling then
+                    enemyCastingId = enemy.channelingspellid
+                end
                 if enemyCastingId then
                     -- print("正在施法",enemyCastingId)
                     for _, v in pairs(Aurora.controlSpellsList) do
@@ -793,6 +803,7 @@ local function controlexec(spell)
                         end
                     end
                 end
+            end
             end)
         end
 
