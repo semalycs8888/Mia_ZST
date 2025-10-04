@@ -1786,11 +1786,14 @@ Macro:RegisterCommand("BKB", function()
 end, "天神下凡(avenging wrath)")
 
 
-Aurora.Macro:RegisterCommand("cast", function(spell)
+-- 修复cast命令处理，使用与其他命令相同的注册方式
+Macro:RegisterCommand("cast", function(spell)
     
     if spell and player.combat then
-        -- print("插入技能:",spell)
-        addSpellStat = spell
+        -- 确保正确处理法术ID参数
+        local trimmedSpell = tostring(spell):trim()
+        -- print("插入技能:",trimmedSpell)
+        addSpellStat = trimmedSpell
         castedCount = 0
     end
 end, "插入技能（insert spell into queue）")
