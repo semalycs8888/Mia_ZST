@@ -1786,20 +1786,36 @@ Macro:RegisterCommand("BKB", function()
 end, "天神下凡(avenging wrath)")
 
 
--- 修复命令解析问题：将cast命令改为使用Macro:RegisterCommand以确保正确解析参数
+-- 兼容中英文客户端的cast命令实现
+-- 根据Aurora Macro系统文档，实现跨语言兼容的技能插入功能
 Macro:RegisterCommand("cast", function(spell)
-    
-    if spell and player.combat then
-        -- 确保正确处理法术ID参数
-        local trimmedSpell = tostring(spell):trim()
-        addSpellStat = trimmedSpell
-        castedCount = 0
+    -- 参数存在性检查
+    if not spell then
+        print("请提供技能ID或名称")
+        return
     end
-end, "insert spell into queue")
-
--- Aurora.Macro:RegisterCommand("cast", function(spell)
---     addSpellStat = spell
--- end, "insert spell into queue")
+    
+    -- 标准化处理参数，确保在中英文客户端都能正确解析
+    -- 移除首尾空格，处理可能的参数合并问题
+    local normalizedSpell = tostring(spell):trim()
+    
+    -- 检查是否为纯数字ID格式（适合英文客户端）
+    local isNumberOnly = tonumber(normalizedSpell) ~= nil
+    
+    -- 记录处理的技能信息（调试用）
+    print("准备插入技能: " .. normalizedSpell)
+    print("是否为数字ID: " .. (isNumberOnly and "是" or "否"))
+    
+    -- 在战斗状态下执行技能插入
+    if player.combat then
+        -- 设置全局变量，用于实际的技能执行
+        addSpellStat = normalizedSpell
+        castedCount = 0
+        print("技能已成功插入队列")
+    else
+        print("只有在战斗状态下才能插入技能")
+    end
+end, "插入指定技能到执行队列 (支持技能ID或名称)")
 
 -- 实现类似JavaScript的setTimeout功能
 -- 参数：
