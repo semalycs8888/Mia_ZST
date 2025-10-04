@@ -1786,36 +1786,36 @@ Macro:RegisterCommand("BKB", function()
 end, "天神下凡(avenging wrath)")
 
 
--- 兼容中英文客户端的cast命令实现
--- 根据Aurora Macro系统文档，实现跨语言兼容的技能插入功能
-Macro:RegisterCommand("cast", function(spell)
-    -- 参数存在性检查
-    if not spell then
-        print("请提供技能ID或名称")
-        return
+-- 修复命令解析问题：实现命令前缀识别，确保正确分离命令名和参数
+-- 在Aurora框架中，命令解析问题导致在英文客户端中"cast 57755"被当作整体命令名
+-- 我们需要直接监听所有命令，然后手动解析出cast命令和参数
+local function onCommandHandler(command, ...)
+    -- 检查是否是cast命令开头
+    if type(command) == "string" and command:sub(1, 4):lower() == "cast" then
+        -- 提取参数部分（去掉cast前缀和可能的空格）
+        local param = command:sub(5):trim()
+        
+        -- 如果参数为空，检查额外参数
+        if param == "" and select('#', ...) > 0 then
+            param = tostring(select(1, ...)):trim()
+        end
+        
+        -- 只有在有参数且玩家处于战斗状态时执行
+        if param ~= "" and player.combat then
+            addSpellStat = param
+            castedCount = 0
+            return true -- 阻止其他处理
+        end
     end
-    
-    -- 标准化处理参数，确保在中英文客户端都能正确解析
-    -- 移除首尾空格，处理可能的参数合并问题
-    local normalizedSpell = tostring(spell):trim()
-    
-    -- 检查是否为纯数字ID格式（适合英文客户端）
-    local isNumberOnly = tonumber(normalizedSpell) ~= nil
-    
-    -- 记录处理的技能信息（调试用）
-    print("准备插入技能: " .. normalizedSpell)
-    print("是否为数字ID: " .. (isNumberOnly and "是" or "否"))
-    
-    -- 在战斗状态下执行技能插入
-    if player.combat then
-        -- 设置全局变量，用于实际的技能执行
-        addSpellStat = normalizedSpell
-        castedCount = 0
-        print("技能已成功插入队列")
-    else
-        print("只有在战斗状态下才能插入技能")
-    end
-end, "插入指定技能到执行队列 (支持技能ID或名称)")
+    return false -- 继续正常处理
+end
+
+-- 注册命令处理钩子到Aurora框架
+Aurora:RegisterCommandHandler(onCommandHandler)
+
+-- Aurora.Macro:RegisterCommand("cast", function(spell)
+--     addSpellStat = spell
+-- end, "insert spell into queue")
 
 -- 实现类似JavaScript的setTimeout功能
 -- 参数：
