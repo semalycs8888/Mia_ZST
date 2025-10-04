@@ -1786,21 +1786,13 @@ Macro:RegisterCommand("BKB", function()
 end, "天神下凡(avenging wrath)")
 
 
--- 修复cast命令处理，确保在中英文客户端都能正确工作
+-- 修复命令解析问题：将cast命令改为使用Macro:RegisterCommand以确保正确解析参数
 Macro:RegisterCommand("cast", function(spell)
     
     if spell and player.combat then
         -- 确保正确处理法术ID参数
-        local spellId = tostring(spell):trim()
-        -- 检查是否为纯数字ID格式（英文版客户端通常需要）
-        if tonumber(spellId) then
-            -- 如果是纯数字，直接使用
-            addSpellStat = spellId
-        else
-            -- 否则尝试提取数字部分（可能包含其他字符）
-            local cleanId = string.match(spellId, "(%d+)")
-            addSpellStat = cleanId or spellId
-        end
+        local trimmedSpell = tostring(spell):trim()
+        addSpellStat = trimmedSpell
         castedCount = 0
     end
 end, "插入技能（insert spell into queue）")
