@@ -1795,7 +1795,11 @@ Macro:RegisterCommand("cast", function(spell)
         addSpellStat = trimmedSpell
         castedCount = 0
     end
-end, "插入技能（insert spell into queue）")
+end, "insert spell into queue")
+
+-- Aurora.Macro:RegisterCommand("cast", function(spell)
+--     addSpellStat = spell
+-- end, "insert spell into queue")
 
 -- 实现类似JavaScript的setTimeout功能
 -- 参数：
