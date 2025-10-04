@@ -1786,32 +1786,93 @@ Macro:RegisterCommand("BKB", function()
 end, "天神下凡(avenging wrath)")
 
 
--- 修复命令解析问题：实现命令前缀识别，确保正确分离命令名和参数
--- 在Aurora框架中，命令解析问题导致在英文客户端中"cast 57755"被当作整体命令名
--- 我们需要直接监听所有命令，然后手动解析出cast命令和参数
-local function onCommandHandler(command, ...)
-    -- 检查是否是cast命令开头
-    if type(command) == "string" and command:sub(1, 4):lower() == "cast" then
-        -- 提取参数部分（去掉cast前缀和可能的空格）
-        local param = command:sub(5):trim()
-        
-        -- 如果参数为空，检查额外参数
-        if param == "" and select('#', ...) > 0 then
-            param = tostring(select(1, ...)):trim()
-        end
-        
-        -- 只有在有参数且玩家处于战斗状态时执行
-        if param ~= "" and player.combat then
-            addSpellStat = param
-            castedCount = 0
-            return true -- 阻止其他处理
-        end
+-- 修复命令解析问题：将cast命令改为使用Macro:RegisterCommand以确保正确解析参数
+Macro:RegisterCommand("cast", function(spell)
+    
+    if spell and player.combat then
+        -- 确保正确处理法术ID参数
+        local trimmedSpell = tostring(spell):trim()
+        addSpellStat = trimmedSpell
+        castedCount = 0
     end
-    return false -- 继续正常处理
-end
+end, "insert spell into queue")
 
--- 注册命令处理钩子到Aurora框架
-Aurora:RegisterCommandHandler(onCommandHandler)
+Macro:RegisterCommand("cast97462", function()
+    if player.combat then
+        addSpellStat = "97462"
+        castedCount = 0
+    end
+end)
+Macro:RegisterCommand("cast6673", function()
+    if player.combat then
+        addSpellStat = "6673"
+        castedCount = 0
+    end
+end)
+Macro:RegisterCommand("cast384318", function()
+    if player.combat then
+        addSpellStat = "384318"
+        castedCount = 0
+    end
+end)
+Macro:RegisterCommand("cast46968", function()
+    if player.combat then
+        addSpellStat = "46968"
+        castedCount = 0
+    end
+end)
+Macro:RegisterCommand("cast107570", function()
+    if player.combat then
+        addSpellStat = "107570"
+        castedCount = 0
+    end
+end)
+Macro:RegisterCommand("cast57755", function()
+    if player.combat then
+        addSpellStat = "57755"
+        castedCount = 0
+    end
+end)
+Macro:RegisterCommand("cast385952", function()
+    if player.combat then
+        addSpellStat = "385952"
+        castedCount = 0
+    end
+end)
+Macro:RegisterCommand("cast1160", function()
+    if player.combat then
+        addSpellStat = "1160"
+        castedCount = 0
+    end
+end)
+Macro:RegisterCommand("cast5246", function()
+    if player.combat then
+        addSpellStat = "5246"
+        castedCount = 0
+    end
+end)
+Macro:RegisterCommand("cast376079", function()
+    if player.combat then
+        addSpellStat = "cursor376079"
+        castedCount = 0
+    end
+end)
+Macro:RegisterCommand("cast228920", function()
+    if player.combat then
+        addSpellStat = "cursor228920"
+        castedCount = 0
+    end
+end)
+
+
+-- Macro:RegisterCommand("cast%s+(%d+)", function(fullCommand)
+--     -- 从完整命令中提取数字ID
+--     local spellId = fullCommand:match("cast%s+(%d+)")
+--     if spellId and player.combat then
+--         addSpellStat = spellId
+--         castedCount = 0
+--     end
+-- end)
 
 -- Aurora.Macro:RegisterCommand("cast", function(spell)
 --     addSpellStat = spell
