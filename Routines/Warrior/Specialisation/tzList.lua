@@ -129,7 +129,7 @@ function TZList:LoadData()
     
     if dataString and dataString ~= "" then
         for item in string.gmatch(dataString, "([^;]+)") do
-            table.insert(self.itemList, item)
+            table.insert(self.itemList, tonumber(item))
         end
     else
         -- 添加模拟数据
@@ -228,7 +228,7 @@ function TZList:AddItem()
     local itemText = self.inputBox:GetText()
     
     if itemText and itemText ~= "" then
-        table.insert(self.itemList, itemText)
+        table.insert(self.itemList, tonumber(itemText))
         self.inputBox:SetText("") -- 清空输入框
         self:SaveData()
         self:UpdateListDisplay()

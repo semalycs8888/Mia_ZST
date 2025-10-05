@@ -603,7 +603,7 @@ gui:Category("Mia_Warrior")
         -- print("法术反射应对列表:", fsfslb)
         Aurora.reflectionSpells = {}
         for item in string.gmatch(fsfslb, "([^;]+)") do
-            table.insert(Aurora.reflectionSpells, item)
+            table.insert(Aurora.reflectionSpells, tonumber(item))
         end
     else
         -- print("未创建列表")
@@ -642,7 +642,7 @@ gui:Category("Mia_Warrior")
             -- print("控制应对列表:", farfromgroup)
             Aurora.interruptSpellsblacklist = {}
             for item in string.gmatch(interruptSpellsblackliststring, "([^;]+)") do
-                table.insert(Aurora.interruptSpellsblacklist, item)
+                table.insert(Aurora.interruptSpellsblacklist, tonumber(item))
             end
         else
             -- print("未创建列表")
@@ -689,7 +689,7 @@ gui:Category("Mia_Warrior")
     zdbcontrol = Aurora.Config:Read("feature.zdbcontrol")
     pdcontrol = Aurora.Config:Read("feature.pdcontrol")
     -- autoyuanhu = Aurora.Config:Read("feature.autoyuanhu")
-    interruptstat = Aurora.Config:Read("feature.interruptstat")
+    interruptstat = Aurora.Config:Read("interruptstat")
     interruptthreshold = Aurora.Config:Read("feature.interruptthreshold")
 end
    
@@ -976,7 +976,18 @@ spellbooks.spells.YINGYONGTOUZHI:callback(function(spell, logic)
         if target.exists and player.distanceto(target) > 8 and player.haslos(target) and player.distanceto(target) < 30 then
             return spell:cast(target)
         end
+    elseif addSpellStat == "mouseover英勇投掷" or addSpellStat == "mouseover57755" then
+        addSpellStat = "57755"
+        mouseover = Aurora.UnitManager:Get("mouseover")
+        if mouseover.exists and player.distanceto(mouseover) > 8 and player.haslos(mouseover) and player.distanceto(mouseover) < 30 then
+            return spell:cast(mouseover)
+        end
     end
+        -- target = Aurora.UnitManager:Get("target")
+        -- if target.exists and player.distanceto(target) > 8 and player.haslos(target) and player.distanceto(target) < 30 then
+        --     return spell:cast(target)
+        -- end
+    
 end)
 
 spellbooks.spells.YONGSHIZHIMAO:callback(function(spell, logic)
@@ -1197,16 +1208,18 @@ spellbooks.spells.ZHENDANGBO:callback(function(spell, logic)
 end)
 
 spellbooks.spells.FANGBAOZHICHUI:callback(function(spell, logic)
-    -- print("风暴之锤")
     if addSpellStat == "风暴之锤" or addSpellStat == "107570" then
         addSpellStat = "107570"
         target = Aurora.UnitManager:Get("target")
         if target.exists and target.enemy and player.distanceto(target) <= 20 and spell:ready() and spell:isknown() then
             return spell:cast(target)
-        -- else
-        --     isLoop = true;
         end
-        -- return spell:cast(player)
+    elseif addSpellStat == "mouseover107570" or addSpellStat == "mouseover风暴之锤" then
+        addSpellStat = "mouseover107570"
+        mouseover = Aurora.UnitManager:Get("mouseover")
+        if mouseover.exists and mouseover.enemy and player.haslos(mouseover) and player.distanceto(mouseover) <= 20 and spell:ready() and spell:isknown() then
+            return spell:cast(mouseover)
+        end
     end
 
     --回响哨兵，打开牢笼 347721  水闸炸弹461796
@@ -1291,19 +1304,20 @@ local function hasInterruptSpell(spellid, interruptstat)
   
 end
 
-local function interruptMethod(spell,focus,spellId)
+local function interruptMethod(spell,unit,spellId)
+    -- print("打断3",interruptstat)
     if interruptstat == "all" then
-        return spell:cast(focus)
+        return spell:cast(unit)
     end
     if interruptstat == "blacklist" then
-        print("打断黑名单",hasInterruptSpell(spellId,"blacklist"))
+        -- print("打断黑名单",hasInterruptSpell(spellId,"blacklist"))
         if not hasInterruptSpell(spellId,"blacklist") then
-            return spell:cast(focus)
+            return spell:cast(unit)
         end
     end
     if interruptstat == "whitelist" then
         if hasInterruptSpell(spellId,"whitelist") then
-            return spell:cast(focus)
+            return spell:cast(unit)
         end
     end
 end
@@ -1318,9 +1332,16 @@ spellbooks.spells.QUANJI:callback(function(spell, logic)
         focus = Aurora.UnitManager:Get("focus")
         if focus.exists and focus.distanceto(player) <= 4 and player.haslos(focus) and focus.enemy and focus.alive and focus.castinginterruptible and focus.playerfacing180 and focus.castingpct >= interruptthreshold then
             if isFSFS then
-                if (focus.casttarget and focus.casttarget.name ~= player.name) or (not spellbooks.spells.FASHUFANSHE:ready() and not player.aura(23920)) and not table.contains(Aurora.reflectionSpells,focus.castingspellid) then
-                   interruptMethod(spell,focus,focus.castingspellid)
-                end
+                    if table.contains(Aurora.reflectionSpells,focus.castingspellid) then
+                        if focus.casttarget and focus.casttarget.name ~= player.name then
+                            interruptMethod(spell,focus,focus.castingspellid)
+                        end
+                        if not spellbooks.spells.FASHUFANSHE:ready() and not player.aura(23920) then
+                            interruptMethod(spell,focus,focus.castingspellid)
+                        end
+                    else
+                        interruptMethod(spell,focus,focus.castingspellid)
+                    end
             else
                 interruptMethod(spell,focus,focus.castingspellid)
             end
@@ -1336,9 +1357,17 @@ spellbooks.spells.QUANJI:callback(function(spell, logic)
             -- print("进战斗的怪",enemy.name)
             if enemy.castinginterruptible and enemy.exists and enemy.distanceto(player) <= 4 and player.haslos(enemy) and enemy.enemy and enemy.alive and enemy.playerfacing180 and enemy.castingpct >= interruptthreshold and enemy.castingspellid ~= 432031 then
                 if isFSFS then
-                    if (enemy.casttarget and enemy.casttarget.name ~= player.name) or (not spellbooks.spells.FASHUFANSHE:ready() and not player.aura(23920)) and not table.contains(Aurora.reflectionSpells,enemy.castingspellid) then
+                    if table.contains(Aurora.reflectionSpells,enemy.castingspellid) then
+                        if enemy.casttarget and enemy.casttarget.name ~= player.name then
+                            interruptMethod(spell,enemy,enemy.castingspellid)
+                        end
+                        if not spellbooks.spells.FASHUFANSHE:ready() and not player.aura(23920) then
+                            interruptMethod(spell,enemy,enemy.castingspellid)
+                        end
+                    else
                         interruptMethod(spell,enemy,enemy.castingspellid)
                     end
+
                 else
                     interruptMethod(spell,enemy,enemy.castingspellid)
                 end
@@ -1863,6 +1892,19 @@ Macro:RegisterCommand("cast228920", function()
         castedCount = 0
     end
 end)
+Macro:RegisterCommand("castmouseover57755", function()
+    if player.combat then
+        addSpellStat = "mouseover57755"
+        castedCount = 0
+    end
+end)
+Macro:RegisterCommand("castmouseover107570", function()
+    if player.combat then
+        addSpellStat = "mouseover107570"
+        castedCount = 0
+    end
+end)
+
 
 
 -- Macro:RegisterCommand("cast%s+(%d+)", function(fullCommand)
