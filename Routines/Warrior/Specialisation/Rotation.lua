@@ -145,6 +145,13 @@ local autoyuanhu = true
 local interruptstat = "all"
 --打断阈值
 local interruptthreshold = 50
+
+local drawFace = true
+-- local drawNotFacing = false
+local drawConnection = true
+local isdraw = true
+local onlyincombat = true
+local drawLineWidth = 2
 -- 将respondSpells添加到Aurora全局表，使其可以在其他文件中访问
 Aurora.respondSpells = Aurora.respondSpells or {
     1237071,--石拳
@@ -557,32 +564,61 @@ gui:Category("Mia_Warrior")
         interruptthreshold = value
     end
 })
-
-
---    :Tab("special")
---     :Checkbox({
---         text = yuanhuicon.."intervene",
---         key = "feature.autoyuanhu",  -- Config key for saving
---         default = true,          -- Default value
---         tooltip = "援护", -- Optional tooltip
---         onChange = function(self, checked)
---             -- print("Checkbox changed:", checked)
---             autoyuanhu = not autoyuanhu
---         end
---    })
---    :Button({
---         text = "intervene response list",
---         key = "interveneList",  -- Config key for saving
---         -- default = true,          -- Default value
---         tooltip = "援护应对技能列表", -- Optional tooltip
-
---         onClick = function(self, checked)
---             -- print("Checkbox changed:", checked)
---             TZList:createList("interveneList")
---         end
---    })
-   
-
+:Tab("Draw")
+    :Checkbox({
+        text = "Draw",
+        key = "feature.draw",  -- Config key for saving
+        default = true,          -- Default value
+        tooltip = "开启绘画", -- Optional tooltip
+        onChange = function(self, checked)
+            -- print("Checkbox changed:", checked)
+            isdraw = checked
+        end
+    })
+    :Header({ text = "Draw Settings" })
+    :Checkbox({
+        text = "only in combat",
+        key = "feature.onlyincombat",  -- Config key for saving
+        default = false,          -- Default value
+        tooltip = "是否只在战斗中绘制", -- Optional tooltip
+        onChange = function(self, checked)
+            -- print("Checkbox changed:", checked)
+            onlyincombat = checked
+        end
+    })
+    :Slider({
+        text = "Draw line width",
+        key = "feature.drawLineWidth",
+        min = 1,
+        max = 5,
+        default = 2,
+        tooltip = "绘制线宽度", -- Optional tooltip
+        onChange = function(self, value)
+            -- print("使用生命药水阈值:", value)
+            drawLineWidth = value
+        end
+    })
+    :Header({ text = "Draw Function" })
+    :Checkbox({
+        text = "Player facing and whether lost autoAttack",
+        key = "feature.autoAttack",  -- Config key for saving
+        default = true,          -- Default value
+        tooltip = "玩家面向和是否丢失平砍", -- Optional tooltip
+        onChange = function(self, checked)
+            -- print("Checkbox changed:", checked)
+            drawFace = checked
+        end
+    })
+    :Checkbox({
+        text = "Connection between player and target",
+        key = "feature.Connection",  -- Config key for saving
+        default = true,          -- Default value
+        tooltip = "玩家面向目标时是否绘制", -- Optional tooltip
+        onChange = function(self, checked)
+            -- print("Checkbox changed:", checked)
+            drawConnection = checked
+        end
+    })
 
    local function InitConfig()
     local jslb = Aurora.Config:Read("jianshangyingdui")
@@ -691,6 +727,11 @@ gui:Category("Mia_Warrior")
     -- autoyuanhu = Aurora.Config:Read("feature.autoyuanhu")
     interruptstat = Aurora.Config:Read("interruptstat")
     interruptthreshold = Aurora.Config:Read("feature.interruptthreshold")
+    isdraw = Aurora.Config:Read("feature.draw")
+    drawConnection = Aurora.Config:Read("feature.Connection")
+    drawFace = Aurora.Config:Read("feature.autoAttack")
+    onlyincombat = Aurora.Config:Read("feature.onlyincombat")
+    drawLineWidth = Aurora.Config:Read("feature.drawLineWidth")
 end
    
 
@@ -740,6 +781,40 @@ local fbaoSpells = {
     347721,
     432967
 }
+
+local function draw()
+
+    local Draw = Aurora.Draw
+-- Register a drawing callback
+    -- Draw:SetWidth(drawLineWidth)
+    Draw:RegisterCallback("myDrawing", function(canvas, unit)
+        -- Drawing code here
+        -- print(unit)
+        canvas:SetWidth(drawLineWidth)
+        if not isdraw then return end
+        if onlyincombat and not player.combat then return end
+        local target = Aurora.UnitManager:Get("target")
+        if unit.name == player.name and target.exists then
+            local r, g, b, a 
+            
+            if player.distanceto(target) <= 4.4 and target.playerfacing180 then
+                 r, g, b, a = Draw:GetColor("Green", 150)
+            else
+                r, g, b, a = Draw:GetColor("Red", 150)
+            end
+            canvas:SetColor(r, g, b, a)
+            -- canvas:Circle(unit.position.x, unit.position.y, unit.position.z,5.4)
+            if drawFace then
+                canvas:Arc(unit.position.x, unit.position.y, unit.position.z,5.4,180,player.rotation)
+            end
+            if drawConnection then
+                canvas:LineRaw(unit.position.x, unit.position.y, unit.position.z,target.position.x, target.position.y, target.position.z)
+            end
+        end
+        
+        
+    end, "units")
+end
 
 --使用饰品
 local function useTrinket()
@@ -1979,6 +2054,7 @@ end)
 -- end
 
 InitConfig()
+draw()
 Aurora:RemoveGlobalToggle("rotation_interrupt")
 Aurora:RemoveGlobalToggle("rotation_cooldown")
 return Mia_Warrior
