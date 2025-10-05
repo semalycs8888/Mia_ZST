@@ -386,7 +386,7 @@ gui:Category("Mia_Warrior")
         key = "graphics.healthDq",
         min = 0,
         max = 90,
-        default = 20,
+        default = 40,
         tooltip = "盾墙血量阈值", -- Optional tooltip
         onChange = function(self, value)
             -- print("战斗时长低于设置秒数,不开启:", value)
@@ -452,7 +452,7 @@ gui:Category("Mia_Warrior")
         key = "feature.shengmingyaoyuzhi",
         min = 10,
         max = 100,
-        default = 20,
+        default = 30,
         tooltip = "低于设定血量使用生命药水",
         onChange = function(self, value)
             -- print("使用生命药水阈值:", value)
