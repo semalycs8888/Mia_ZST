@@ -8,6 +8,10 @@ if not Aurora.TZList then
     require "tzList"
 end
 local TZList = Aurora.TZList or {}
+if not Aurora.UpdateAlert then
+    require "UpdateAlert"
+end
+local UpdateAlert = Aurora.UpdateAlert or {}
 
 local spellbooks = {
     spells = {
@@ -277,9 +281,36 @@ local pdnhicon = Aurora.texture(5246)
 local fsfsicon = Aurora.texture(23920)
 local yuanhuicon = Aurora.texture(3411)
 
+
+local function CreateSkillMacro()
+    -- 先判断宏是否已满（角色宏18个，通用宏120个，这里以角色宏为例）
+    local numGlobal,numPerChar = GetNumMacros()
+    if numGlobal >= 109 then
+        -- 抛出错误，会在聊天框显示提示
+        Aurora.alert("Mia: 角色宏列表已满，无法创建新宏！")
+    else
+        CreateMacro("集结呐喊", "INV_Misc_QuestionMark", "/"..Aurora.Macro.baseCommand.." cast 97462\n/cast 集结呐喊", nil)
+        CreateMacro("战斗怒吼", "INV_Misc_QuestionMark", "/"..Aurora.Macro.baseCommand.." cast 6673\n/cast 战斗怒吼", nil)
+        CreateMacro("雷鸣之吼", "INV_Misc_QuestionMark", "/"..Aurora.Macro.baseCommand.." cast 384318\n/cast 雷鸣之吼", nil)
+        CreateMacro("风暴之锤", "INV_Misc_QuestionMark", "/"..Aurora.Macro.baseCommand.." cast 107570\n/cast 风暴之锤", nil)
+        CreateMacro("风暴之锤", "INV_Misc_QuestionMark", "/"..Aurora.Macro.baseCommand.." cast mouseover107570\n/cast [@mouseover] 风暴之锤", nil)
+        CreateMacro("破坏者", "INV_Misc_QuestionMark", "/"..Aurora.Macro.baseCommand.." cast cursor228920\n/cast [@cursor] 破坏者", nil)    
+        CreateMacro("盾牌冲锋", "INV_Misc_QuestionMark", "/"..Aurora.Macro.baseCommand.." cast 385952\n/cast 盾牌冲锋", nil)
+        CreateMacro("震荡波", "INV_Misc_QuestionMark", "/"..Aurora.Macro.baseCommand.." cast 46968\n/cast 震荡波", nil)
+        CreateMacro("英勇投掷", "INV_Misc_QuestionMark", "/"..Aurora.Macro.baseCommand.." cast 57755\n/cast 英勇投掷", nil)
+        CreateMacro("英勇投掷", "INV_Misc_QuestionMark", "/"..Aurora.Macro.baseCommand.." cast mouseover57755\n/cast [@mouseover] 英勇投掷", nil)
+        CreateMacro("开关", "INV_Misc_QuestionMark", "/"..Aurora.Macro.baseCommand.." toggle", nil)
+        CreateMacro("挫志怒吼", "INV_Misc_QuestionMark", "#showtooltip 挫志怒吼\n/"..Aurora.Macro.baseCommand.." cast 1160\n/cast 挫志怒吼", nil)
+        -- CreateMacro("吐息", "INV_Misc_QuestionMark", "#showtooltip 冰龙吐息\n/"..Aurora.Macro.baseCommand.." outbreak", nil)
+    end 
+end
+
+
 local gui = Aurora.GuiBuilder:New()
 gui:Category("Mia_Warrior")
    :Tab("readme")
+    :Button({text = "生成常用宏命令", key = "marco", width = 100, height = 30,onClick = function() CreateSkillMacro() end})
+   :Button({text = "复制常用天赋字符串", key = "talent", width = 100, height = 30,onClick = function() CopyToClipboard("CkEArbixk/ZKwTdpZGVHeylmL0yAAAAwYGzMzMzMmNjZZwYMaMLjZYsMmZG2mZGzADDAAAAAAsMGAYGbAGYDWWMaMDgZJMbwMD") end})
    :Header({ text = "/"..Aurora.Macro.baseCommand.." cast [spellName/spellID] English client,use SpellID" })
    :Header({ text = "/"..Aurora.Macro.baseCommand.." cast cursor[spellName/spellID]" })
     :Header({ text = "Do not use SmartQueue to insert skills" })
@@ -1980,81 +2011,32 @@ Macro:RegisterCommand("castmouseover107570", function()
     end
 end)
 
+local function ShowUpdateAlert()
+    local updateMessages = {
+        -- "时间:10月7日 13:23",
+        "增加自动生成常用宏命令按钮",
+        "增加常用天赋按钮,点击复制字符串",
+        "*** 有问题及时联系作者(秒改) ***"
+    }
+
+    local updateTips = Aurora.Config:Read('UpdateTips')
+    if updateTips then
+        local dataString = table.concat(updateMessages, ";")
+        if updateTips ~= dataString then
+            UpdateAlert:ShowWindow(updateMessages)
+            Aurora.Config:Write('UpdateTips', dataString)
+        end
+    else
+        UpdateAlert:ShowWindow(updateMessages)
+        Aurora.Config:Write('UpdateTips', table.concat(updateMessages, ";"))
+    end
+end
 
 
--- Macro:RegisterCommand("cast%s+(%d+)", function(fullCommand)
---     -- 从完整命令中提取数字ID
---     local spellId = fullCommand:match("cast%s+(%d+)")
---     if spellId and player.combat then
---         addSpellStat = spellId
---         castedCount = 0
---     end
--- end)
-
--- Aurora.Macro:RegisterCommand("cast", function(spell)
---     addSpellStat = spell
--- end, "insert spell into queue")
-
--- 实现类似JavaScript的setTimeout功能
--- 参数：
---   delayMs: 延迟时间（毫秒）
---   callback: 延迟后执行的回调函数
--- 返回值：
---   返回一个timerId，可用于clearTimeout取消定时器
--- local function setTimeout(delayMs, callback)
---     if type(callback) ~= "function" then
---         error("setTimeout: 第二个参数必须是函数")
---         return nil
---     end
---     
---     local delaySeconds = delayMs / 1000 -- 转换为秒
---     local startTime = os.clock()
---     local timerId
-    
---     timerId = Aurora:OnUpdate(function()
---         local elapsedTime = os.clock() - startTime
---         if elapsedTime >= delaySeconds then
---             Aurora:RemoveCallback(timerId, true)
---             callback()
---         end
---     end)
-    
---     return timerId
--- end
-
--- -- 取消setTimeout设置的定时器
--- -- 参数：
--- --   timerId: 通过setTimeout返回的定时器ID
--- local function clearTimeout(timerId)
---     if timerId then
---         Aurora:RemoveCallback(timerId, true)
---     end
--- end
-
-
--- Macro:RegisterCommand("close", function(time,options)
---     print("关闭:",time,options)
---     if time and options then
---         local timer = setTimeout(tonumber(time), function()
---             if options == "天神下凡" then
---                 autoTianshen = false
---                 autoTianshen_toggle:SetValue(autoTianshen)
---                 print("天神下凡已关闭")
---             end
---             -- clearTimeout(timer)
---         end)
---     end
--- end, "关闭指定选项，例如天神下凡")
-
--- if TZList then
---     print("创建打断列表")
---     print("TZList.test = "..TZList.test)
---     -- 使用下面的代码可以打开简单列表管理界面
---     TZList.createList()
--- end
 
 InitConfig()
 draw()
+ShowUpdateAlert()
 Aurora:RemoveGlobalToggle("rotation_interrupt")
 Aurora:RemoveGlobalToggle("rotation_cooldown")
 return Mia_Warrior

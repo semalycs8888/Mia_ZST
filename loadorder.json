@@ -2,6 +2,7 @@
   "Main",
   "Routines/Warrior/Specialisation/Spellbook",
   "Routines/Warrior/Specialisation/Interface",
+  "Routines/Warrior/Specialisation/UpdateAlert",
   "Routines/Warrior/Specialisation/DungeonSpell",
   "Routines/Warrior/Specialisation/tzList",
   "Routines/Warrior/Specialisation/Rotation"
