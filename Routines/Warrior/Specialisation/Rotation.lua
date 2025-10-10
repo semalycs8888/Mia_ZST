@@ -13,6 +13,20 @@ if not Aurora.UpdateAlert then
 end
 local UpdateAlert = Aurora.UpdateAlert or {}
 
+if not Aurora.Tool then
+    require "Tool"
+end
+local Tool = Aurora.Tool or {}
+
+-- 获取客户端语言
+local clientLocale = GetLocale()
+local isChineseClient = clientLocale == "zhCN" or clientLocale == "enUS"
+
+-- 多语言文本获取函数
+local function getLocalizedText(zhText, enText)
+    return isChineseClient and zhText or enText
+end
+
 local spellbooks = {
     spells = {
         AutoAttack = NewSpell(6603),
@@ -292,101 +306,118 @@ local function CreateSkillMacro()
     local numGlobal,numPerChar = GetNumMacros()
     if numGlobal >= 109 then
         -- 抛出错误，会在聊天框显示提示
-        Aurora.alert("Mia: 角色宏列表已满，无法创建新宏！")
+        Aurora.alert(getLocalizedText("Mia: 角色宏列表已满，无法创建新宏！", "Mia: Role macro list is full, cannot create new macro!"))
     else
-        CreateMacro("集结呐喊", "INV_Misc_QuestionMark", "/"..Aurora.Macro.baseCommand.." cast 97462\n/cast 集结呐喊", nil)
-        CreateMacro("战斗怒吼", "INV_Misc_QuestionMark", "/"..Aurora.Macro.baseCommand.." cast 6673\n/cast 战斗怒吼", nil)
-        CreateMacro("雷鸣之吼", "INV_Misc_QuestionMark", "/"..Aurora.Macro.baseCommand.." cast 384318\n/cast 雷鸣之吼", nil)
-        CreateMacro("风暴之锤", "INV_Misc_QuestionMark", "/"..Aurora.Macro.baseCommand.." cast 107570\n/cast 风暴之锤", nil)
-        CreateMacro("风暴之锤", "INV_Misc_QuestionMark", "/"..Aurora.Macro.baseCommand.." cast mouseover107570\n/cast [@mouseover] 风暴之锤", nil)
-        CreateMacro("破坏者", "INV_Misc_QuestionMark", "/"..Aurora.Macro.baseCommand.." cast cursor228920\n/cast [@cursor] 破坏者", nil)    
-        CreateMacro("盾牌冲锋", "INV_Misc_QuestionMark", "/"..Aurora.Macro.baseCommand.." cast 385952\n/cast 盾牌冲锋", nil)
-        CreateMacro("震荡波", "INV_Misc_QuestionMark", "/"..Aurora.Macro.baseCommand.." cast 46968\n/cast 震荡波", nil)
-        CreateMacro("英勇投掷", "INV_Misc_QuestionMark", "/"..Aurora.Macro.baseCommand.." cast 57755\n/cast 英勇投掷", nil)
-        CreateMacro("英勇投掷", "INV_Misc_QuestionMark", "/"..Aurora.Macro.baseCommand.." cast mouseover57755\n/cast [@mouseover] 英勇投掷", nil)
-        CreateMacro("开关", "INV_Misc_QuestionMark", "/"..Aurora.Macro.baseCommand.." toggle", nil)
-        CreateMacro("挫志怒吼", "INV_Misc_QuestionMark", "#showtooltip 挫志怒吼\n/"..Aurora.Macro.baseCommand.." cast 1160\n/cast 挫志怒吼", nil)
-        -- CreateMacro("吐息", "INV_Misc_QuestionMark", "#showtooltip 冰龙吐息\n/"..Aurora.Macro.baseCommand.." outbreak", nil)
+        -- CreateMacro("集结呐喊", "INV_Misc_QuestionMark", "/"..Aurora.Macro.baseCommand.." cast 97462\n/cast 集结呐喊", nil)
+        -- CreateMacro("战斗怒吼", "INV_Misc_QuestionMark", "/"..Aurora.Macro.baseCommand.." cast 6673\n/cast 战斗怒吼", nil)
+        -- CreateMacro("雷鸣之吼", "INV_Misc_QuestionMark", "/"..Aurora.Macro.baseCommand.." cast 384318\n/cast 雷鸣之吼", nil)
+        -- CreateMacro("风暴之锤", "INV_Misc_QuestionMark", "/"..Aurora.Macro.baseCommand.." cast 107570\n/cast 风暴之锤", nil)
+        -- CreateMacro("风暴之锤", "INV_Misc_QuestionMark", "/"..Aurora.Macro.baseCommand.." cast mouseover107570\n/cast [@mouseover] 风暴之锤", nil)
+        -- CreateMacro("破坏者", "INV_Misc_QuestionMark", "/"..Aurora.Macro.baseCommand.." cast cursor228920\n/cast [@cursor] 破坏者", nil)    
+        -- CreateMacro("盾牌冲锋", "INV_Misc_QuestionMark", "/"..Aurora.Macro.baseCommand.." cast 385952\n/cast 盾牌冲锋", nil)
+        -- CreateMacro("震荡波", "INV_Misc_QuestionMark", "/"..Aurora.Macro.baseCommand.." cast 46968\n/cast 震荡波", nil)
+        -- CreateMacro("英勇投掷", "INV_Misc_QuestionMark", "/"..Aurora.Macro.baseCommand.." cast 57755\n/cast 英勇投掷", nil)
+        -- CreateMacro("英勇投掷", "INV_Misc_QuestionMark", "/"..Aurora.Macro.baseCommand.." cast mouseover57755\n/cast [@mouseover] 英勇投掷", nil)
+        -- CreateMacro("开关", "INV_Misc_QuestionMark", "/"..Aurora.Macro.baseCommand.." toggle", nil)
+        -- CreateMacro("挫志怒吼", "INV_Misc_QuestionMark", "#showtooltip 挫志怒吼\n/"..Aurora.Macro.baseCommand.." cast 1160\n/cast 挫志怒吼", nil)
+        Aurora.Tool:CreateMacro(97462, "regular", false)
+        Aurora.Tool:CreateMacro(6673, "regular", false)
+        Aurora.Tool:CreateMacro(384318, "regular", false)
+        Aurora.Tool:CreateMacro(107570, "mouseover", false)
+        Aurora.Tool:CreateMacro(107570, "regular", false)
+        Aurora.Tool:CreateMacro(228920, "cursor", false)
+        Aurora.Tool:CreateMacro(385952, "regular", false)
+        Aurora.Tool:CreateMacro(46968, "regular", false)
+        Aurora.Tool:CreateMacro(57755, "mouseover", false)
+        Aurora.Tool:CreateMacro(57755, "regular", false)
+        Aurora.Tool:CreateMacro(1160, "regular", false)
+        CreateMacro(getLocalizedText("开关", "Toggle"), "INV_Misc_QuestionMark", "/"..Aurora.Macro.baseCommand.." toggle", nil)
     end 
 end
 
-
+-- print(Tool:GetSpellNameByID(107574))
 local gui = Aurora.GuiBuilder:New()
 gui:Category("Mia_Warrior")
-   :Tab("readme")
-    :Button({text = "生成常用宏命令", key = "marco", width = 100, height = 30,onClick = function() CreateSkillMacro() end})
-   :Button({text = "复制常用天赋字符串", key = "talent", width = 100, height = 30,onClick = function() CopyToClipboard("CkEArbixk/ZKwTdpZGVHeylmL0yAAAAwYGzMzMzMmNjZZwYMaMLjZYsMmZG2mZGzADDAAAAAAsMGAYGbAGYDWWMaMDgZJMbwMD") end})
-   :Header({ text = "/"..Aurora.Macro.baseCommand.." cast [spellName/spellID] English client,use SpellID" })
-   :Header({ text = "/"..Aurora.Macro.baseCommand.." cast cursor[spellName/spellID]" })
-    :Header({ text = "Do not use SmartQueue to insert skills" })
-    :Header({ text = "no need to insert macros for skills without global cooldown" })
-    :Tab("regular")
-   :Header({ text = "response to damage reduction abilities" })
+   :Tab(getLocalizedText("常用宏命令", "Common Macros"))
+    :Button({text = getLocalizedText("生成常用宏命令", "Create Common Macros"), key = "marco", width = 100, height = 30,onClick = function() CreateSkillMacro() end})
+   :Button({text = getLocalizedText("复制常用天赋字符串", "Copy Common Talent String"), key = "talent", width = 100, height = 30,onClick = function() CopyToClipboard("CkEArbixk/ZKwTdpZGVHeylmL0yAAAAwYGzMzMzMmNjZZwYMaMLjZYsMmZG2mZGzADDAAAAAAsMGAYGbAGYDWWMaMDgZJMbwMD") end})
+    :Header({ text = getLocalizedText("功能开关宏(点击复制)", "Feature Toggle Macros(click to copy)") })
+    :Button({text = Aurora.texture(6552)..getLocalizedText("开关自动打断", "Toggle Automatic Interruption"), key = "automaticinterruption", width = 100, height = 30,onClick = function() CopyToClipboard("/"..Aurora.Macro.baseCommand.." automaticinterruption") end})
+    :Button({text = Aurora.texture(107574)..getLocalizedText("自动天神下凡", "auto "..Tool:GetSpellNameByID(107574)), key = "tianshenxiafan", width = 100, height = 30,onClick = function() CopyToClipboard("/"..Aurora.Macro.baseCommand.." bkb") end})
+    :Button({text = Aurora.texture(355)..getLocalizedText("自动嘲讽", "auto "..Tool:GetSpellNameByID(355)), key = "automatictaunt", width = 100, height = 30,onClick = function() CopyToClipboard("/"..Aurora.Macro.baseCommand.." ridicule") end})
+    :Button({text = Aurora.texture(385952)..getLocalizedText("自动盾牌冲锋", "auto "..Tool:GetSpellNameByID(385952)), key = "automatictaunt2", width = 100, height = 30,onClick = function() CopyToClipboard("/"..Aurora.Macro.baseCommand.." shieldcharge") end})
+    :Button({text = Aurora.texture(1160)..getLocalizedText("挫志怒吼卡CD", "auto "..Tool:GetSpellNameByID(1160)), key = "autocuozhinuhou", width = 100, height = 30,onClick = function() CopyToClipboard("/"..Aurora.Macro.baseCommand.." shout") end})
+    :Button({text = Aurora.texture(23920)..Aurora.Tool:GetSpellNameByID(23920), key = "autojingguang", width = 100, height = 30,onClick = function() CopyToClipboard("/"..Aurora.Macro.baseCommand.." spellreflection") end})
+    :Button({text = Aurora.texture(384318)..getLocalizedText("自动雷鸣之吼", "auto "..Tool:GetSpellNameByID(384318)), key = "autoleinguohou", width = 100, height = 30,onClick = function() CopyToClipboard("/"..Aurora.Macro.baseCommand.." thunderousroar") end})
+    :Button({text = Aurora.texture(76290)..getLocalizedText("自动选择目标", "auto select target"), key = "autoselecttarget", width = 100, height = 30,onClick = function() CopyToClipboard("/"..Aurora.Macro.baseCommand.." switchtarget") end})
+
+    :Tab(getLocalizedText("减伤技能", "Damage Reduction Skills"))
+   :Header({ text = getLocalizedText("前置减伤应对", "Pre-damage Reduction Response") })
    :Checkbox({
-    text = dqicon.."shield wall",
+    text = dqicon..getLocalizedText("盾墙", "shield wall"),
     key = "feature.isDUNQIANG",  -- Config key for saving
     default = true,          -- Default value
-    tooltip = "盾墙应对", -- Optional tooltip
+    tooltip = getLocalizedText("盾墙应对", "Shield Wall Response"), -- Optional tooltip
     onChange = function(self, checked)
         -- print("Checkbox changed:", checked)
         isDUNQIANG = not isDUNQIANG
     end
 })
    :Checkbox({
-    text = cznhicon.."demoralizing shout",
+    text = cznhicon..getLocalizedText("挫志怒吼", "demoralizing shout"),
     -- icon = "1160",
     key = "feature.isCUOZHINUHOU",  -- Config key for saving
     default = true,          -- Default value
-    tooltip = "挫志怒吼应对", -- Optional tooltip
+    tooltip = getLocalizedText("挫志怒吼应对", "Demoralizing Shout Response"), -- Optional tooltip
     onChange = function(self, checked)
         -- print("Checkbox changed:", checked)
         isCUOZHINUHOU = not isCUOZHINUHOU
     end
    })
     :Checkbox({
-    text = pfczicon.."last stand",
+    text = pfczicon..getLocalizedText("破釜沉舟", "last stand"),
     key = "feature.isPOFUCHENZHOU",  -- Config key for saving
     default = true,          -- Default value
-    tooltip = "破釜沉舟应对", -- Optional tooltip
+    tooltip = getLocalizedText("破釜沉舟应对", "Last Stand Response"), -- Optional tooltip
     onChange = function(self, checked)
         -- print("Checkbox changed:", checked)
         isPOFUCHENZHOU = not isPOFUCHENZHOU
     end
    })
    :Button({
-        text = "damage reduction response list",
+        text = getLocalizedText("减伤应对列表", "Damage Reduction Response List"),
         width = 120,      -- Optional
         height = 25,      -- Optional
-        tooltip = "减伤应对列表", -- Optional tooltip
+        tooltip = getLocalizedText("减伤应对列表", "Damage Reduction Response List"), -- Optional tooltip
         key = "jianshangyingdui",
         onClick = function() 
             TZList:createList("jianshangyingdui")
         end
     })
-    :Header({ text = fsfsicon.."spell reflection" })
+    :Header({ text = fsfsicon..getLocalizedText("法术反射", "spell reflection") })
     :Button({
-        text = "spell reflection response list",
+        text = getLocalizedText("法术反射应对列表", "Spell Reflection Response List"),
         width = 120,      -- Optional
         height = 25,      -- Optional
-        tooltip = "法术反射应对列表", -- Optional tooltip
+        tooltip = getLocalizedText("法术反射应对列表", "Spell Reflection Response List"), -- Optional tooltip
         key = "fashufansheyingdui",
         onClick = function() 
             TZList:createList("fashufansheyingdui")
         end
     })
-   :Header({ text = wskticon.."ignore pain" })
+   :Header({ text = wskticon..getLocalizedText("无视苦痛", "ignore pain") })
    :Dropdown({
-        text = "ignore pain threshold",
+        text = getLocalizedText("无视苦痛阈值", "ignore pain threshold"),
         key = "graphics.isIgnoringPain",
         options = {
-            { text = "average", value = "average" },
-            { text = "moderate", value = "moderate" },
-            { text = "extreme", value = "extreme" }
+            { text = getLocalizedText("一般", "average"), value = "average" },
+            { text = getLocalizedText("中等", "moderate"), value = "moderate" },
+            { text = getLocalizedText("极端", "extreme"), value = "extreme" }
         },
         default = "average",
         multi = false,           -- Set to true for multi-select
         width = 200,            -- Optional
-        tooltip = "无视苦痛吸收量 (average/moderate/extreme, adjustable via macro command/Aurora IgnoringPain average/moderate/extreme)",
+        tooltip = getLocalizedText("无视苦痛吸收量", "ignore pain threshold"), -- Optional tooltip
         onChange = function(self, value)
             if value == "average" then
                 --一般
@@ -403,124 +434,124 @@ gui:Category("Mia_Warrior")
             end
         end
     })
-     :Header({ text = "avgTTD" })
+     :Header({ text = getLocalizedText("剩余战斗时长", "Combat Duration Threshold") })
     :Slider({
-        text = "remaining combat duration",
+        text = getLocalizedText("剩余战斗时长", "Remaining Combat Duration"),
         key = "graphics.viewDistance",
         min = 10,
         max = 60,
         default = 20,
-        tooltip = "战斗时长低于设置秒数,不开启爆发", -- Optional tooltip
+        tooltip = getLocalizedText("战斗时长低于设置秒数,不开启爆发", "Combat Duration Threshold"), -- Optional tooltip
         onChange = function(self, value)
             -- print("战斗时长低于设置秒数,不开启:", value)
             iscdsTime = value
         end
    })
-   :Header({ text = "health response for shield wall and last stand(set value is 0,disable)" })
+   :Header({ text = getLocalizedText("血量阈值", "Health Threshold") })
    :Slider({
-        text = dqicon.."shield wall health threshold",
+        text = dqicon..getLocalizedText("盾墙血量阈值", "Shield Wall Health Threshold"),
         key = "graphics.healthDq",
         min = 0,
         max = 90,
         default = 40,
-        tooltip = "盾墙血量阈值", -- Optional tooltip
+        tooltip = getLocalizedText("盾墙血量阈值", "Shield Wall Health Threshold"), -- Optional tooltip
         onChange = function(self, value)
             -- print("战斗时长低于设置秒数,不开启:", value)
             healthDq = value
         end
    })
    :Slider({
-        text = pfczicon.."last stand health threshold",
+        text = pfczicon..getLocalizedText("破釜沉舟血量阈值", "Last Stand Health Threshold"),
         key = "graphics.healthPf",
         min = 0,
         max = 90,
         default = 20,
-        tooltip = "破釜沉舟血量阈值", -- Optional tooltip
+        tooltip = getLocalizedText("破釜沉舟血量阈值", "Last Stand Health Threshold"), -- Optional tooltip
         onChange = function(self, value)
             -- print("战斗时长低于设置秒数,不开启:", value)
-            healthDq = value
+            healthPf = value
         end
    })
 
-   :Tab("item")
+   :Tab(getLocalizedText("物品", "Items"))
     :Checkbox({
-    text = "CR (mouseover)",
+    text = getLocalizedText("鼠标指向战复", "CR (mouseover)"),
     key = "feature.mouseoverfuhuo",  -- Config key for saving
     default = true,          -- Default value
-    tooltip = "开启后,指向会自动使用道具战复,只支持3星电缆", -- Optional tooltip
+    tooltip = getLocalizedText("开启后,指向会自动使用道具战复,只支持3星电缆", "Enable to use items on mouseover, only supports 3-star cables"), -- Optional tooltip
     onChange = function(self, checked)
         -- print("Checkbox changed:", checked)
         mouseoverfuhuo = not mouseoverfuhuo
     end
    })
     :Checkbox({
-    text = "bind avenging wrath to flasks of the blazing prowess",
+    text = getLocalizedText("淬火药水绑定复仇", "Bind Avenging Wrath to Flasks of the Blazing Prowess"),
     key = "feature.baofayao",  -- Config key for saving
     default = true,          -- Default value
-    tooltip = "开启后会自动使用爆发药，需要有[淬火药水]", -- Optional tooltip
+    tooltip = getLocalizedText("开启后会自动使用爆发药，需要有[淬火药水]", "Enable to use flasks of the blazing prowess, requires [quenched potion]"), -- Optional tooltip
     onChange = function(self, checked)
         -- print("Checkbox changed:", checked)
         baofayao = not baofayao
     end
    })
-    :Header({ text = "trinket" })
+    :Header({ text = getLocalizedText("饰品", "Trinket") })
     :Checkbox({
-    text = "use trinket",
+    text = getLocalizedText("使用饰品", "Use Trinket"),
     key = "feature.useTrinket",  -- Config key for saving
     default = true,          -- Default value
-    tooltip = "是否使用饰品", -- Optional tooltip
+    tooltip = getLocalizedText("是否使用饰品", "Enable to use trinket"), -- Optional tooltip
     onChange = function(self, checked)
         isuseTrinket = checked
     end
     })
     :Header({ text = " " })
     :Checkbox({
-    text = "use trinket 1",
+    text = getLocalizedText("使用饰品1", "Use Trinket 1"),
     key = "feature.useTrinket1",  -- Config key for saving
     default = true,          -- Default value
-    tooltip = "是否使用饰品2", -- Optional tooltip
+    tooltip = getLocalizedText("是否使用饰品1", "Enable to use trinket 1"), -- Optional tooltip
     onChange = function(self, checked)
         isuseTrinket1 = checked
     end
     })
     :Dropdown({
-        text = "trinket 1",
+        text = getLocalizedText("饰品1", "Trinket 1"),
         key = "feature.trinket1",
         options = {
-            { text = "BKB", value = "revenge" },
-            { text = "low hp", value = "lowhp" },
-            { text = "counter ability", value = "counterAbility" }
+            { text = getLocalizedText("天神下凡", "BKB"), value = "revenge" },
+            { text = getLocalizedText("低血量", "Low HP"), value = "lowhp" },
+            { text = getLocalizedText("前置减伤", "Counter Ability"), value = "counterAbility" }
         },
         default = "revenge",
         multi = false,           -- Set to true for multi-select
         width = 200,            -- Optional
-        tooltip = "Select trinket 1",
+        tooltip = getLocalizedText("选择饰品1", "Select trinket 1"),
         onChange = function(self, value)
             -- print("trinket 1 changed:", value)
             trinket1state = value
         end
     })
     :Checkbox({
-    text = "use trinket 2",
+    text = getLocalizedText("使用饰品2", "Use Trinket 2"),
     key = "feature.useTrinket2",  -- Config key for saving
     default = true,          -- Default value
-    tooltip = "是否使用饰品2", -- Optional tooltip
+    tooltip = getLocalizedText("是否使用饰品2", "Enable to use trinket 2"), -- Optional tooltip
     onChange = function(self, checked)
         isuseTrinket2 = checked
     end
     })
     :Dropdown({
-        text = "trinket 2",
+        text = getLocalizedText("饰品2", "Trinket 2"),
         key = "feature.trinket2",
         options = {
-            { text = "BKB", value = "revenge" },
-            { text = "low hp", value = "lowhp" },
-            { text = "counter ability", value = "counterAbility" }
+            { text = getLocalizedText("天神下凡", "BKB"), value = "revenge" },
+            { text = getLocalizedText("低血量", "Low HP"), value = "lowhp" },
+            { text = getLocalizedText("前置减伤", "Counter Ability"), value = "counterAbility" }
         },
         default = "revenge",
         multi = false,           -- Set to true for multi-select
         width = 200,            -- Optional
-        tooltip = "Select trinket 2",
+        tooltip = getLocalizedText("选择饰品2", "Select trinket 2"),
         onChange = function(self, value)
             -- print("trinket 2 changed:", value)
             trinket2state = value
@@ -528,17 +559,17 @@ gui:Category("Mia_Warrior")
     })
 
     :Slider({
-    text = "Use trinket when the health value is lower than the set value",
+    text = getLocalizedText("使用饰品血量阈值", "Trinket Health Threshold"),
     key = "feature.trinketHP",  -- Config key for saving
     default = 50,          -- Default value
-    tooltip = "低于设定血量使用饰品", -- Optional tooltip
+    tooltip = getLocalizedText("低于设定血量使用饰品", "Use trinket when the health value is lower than the set value"), -- Optional tooltip
     onChange = function(self, value)
         useTrinkethp = value
     end
     })
-    :Header({ text = "resurgent healding potion" })
+    :Header({ text = Aurora.texture(244021).. " " .. getLocalizedText("焕生治疗药水", "Resurgent Healing Potion") })
    :Slider({
-        text = "resurgent healding potion threshold",
+        text = getLocalizedText("焕生治疗药水血量阈值", "Resurgent Healing Potion Health Threshold"),
         key = "feature.shengmingyaoyuzhi",
         min = 10,
         max = 100,
@@ -549,12 +580,12 @@ gui:Category("Mia_Warrior")
             shengmingyaoyuzhi = value
         end
    })
-   :Tab("control")
+   :Tab(getLocalizedText("控制技能", "Control Spells"))
     :Checkbox({
-        text = fbzcicon.."storm bolt",
+        text = fbzcicon..getLocalizedText("风暴之锤", "Storm Bolt"),
         key = "feature.fbzccontrol",  -- Config key for saving
         default = true,          -- Default value
-        tooltip = "风暴之锤", -- Optional tooltip
+        tooltip = getLocalizedText("风暴之锤", "Storm Bolt"), -- Optional tooltip
         onChange = function(self, checked)
             -- print("Checkbox changed:", checked)
             fbzccontrol = not fbzccontrol
@@ -562,68 +593,68 @@ gui:Category("Mia_Warrior")
     })
   
     :Checkbox({
-        text = zdbicon.."shockwave",
+        text = zdbicon..getLocalizedText("震荡波", "Shockwave"),
         key = "feature.zdbcontrol",  -- Config key for saving
         default = true,          -- Default value
-        tooltip = "震荡波", -- Optional tooltip
+        tooltip = getLocalizedText("震荡波", "Shockwave"), -- Optional tooltip
         onChange = function(self, checked)
             -- print("Checkbox changed:", checked)
             zdbcontrol = not zdbcontrol
         end
     })
     :Checkbox({
-        text = pdnhicon.."intimidating shout",
+        text = pdnhicon..getLocalizedText("破胆怒吼", "Intimidating Shout"),
         key = "feature.pdcontrol",  -- Config key for saving
         default = true,          -- Default value
-        tooltip = "破胆怒吼", -- Optional tooltip
+        tooltip = getLocalizedText("破胆怒吼", "Intimidating Shout"), -- Optional tooltip
         onChange = function(self, checked)
             -- print("Checkbox changed:", checked)
             pdcontrol = not pdcontrol
         end
     })
     :Button({
-        text = "control countermeasures list",
+        text = getLocalizedText("控制技能应对列表", "Control Spells Countermeasures List"),
         key = "controlSpellsList",  -- Config key for saving
         -- default = true,          -- Default value
-        tooltip = "控制技能应对列表", -- Optional toolti
+        tooltip = getLocalizedText("控制技能应对列表", "Control Spells Countermeasures List"), -- Optional tooltip
         onClick = function(self, checked)
            TZList:createList("controlSpellsList")
         end
     })
-    :Header({ text = "special response for storm bolt" })
+    :Header({ text = getLocalizedText("风暴之锤打断回响哨兵，天街打开牢笼，水闸装弹", "Special Response for Storm Bolt") })
     :Checkbox({
-        text = fbzcicon.."special response for storm bolt",
+        text = fbzcicon..getLocalizedText("风暴之锤", "Storm Bolt"),
         key = "feature.isFbaoSp",  -- Config key for saving
         default = true,          -- Default value
-        tooltip = "风暴之锤打断回响哨兵，天街打开牢笼，水闸装弹", -- Optional tooltip
+        tooltip = getLocalizedText("风暴之锤", "Storm Bolt"), -- Optional tooltip
         onChange = function(self, checked)
             -- print("Checkbox changed:", checked)
             isFbaoSp = not isFbaoSp
         end
    })
-:Tab("interrupt")
+:Tab(getLocalizedText("打断", "Interrupt"))
 :Dropdown({
-    text = "interrupt target",
+    text = getLocalizedText("打断目标", "Interrupt Target"),
     key = "interruptstat",
     options = {
-        { text = "All", value = "all" },
-        { text = "Blacklist", value = "blacklist" },
-        { text = "Whitelist", value = "whitelist" }
+        { text = getLocalizedText("所有", "All"), value = "all" },
+        { text = getLocalizedText("黑名单", "Blacklist"), value = "blacklist" },
+        { text = getLocalizedText("白名单", "Whitelist"), value = "whitelist" }
     },
     default = "all",
     multi = false,           -- Set to true for multi-select
     width = 200,            -- Optional
-    tooltip = "Select quality level",
+    tooltip = getLocalizedText("打断目标", "Interrupt Target"), -- Optional tooltip
     onChange = function(self, value)
         interruptstat = value
     end
 })
 
 :Button({
-    text = "interrupt black list",
+    text = getLocalizedText("打断黑名单", "Interrupt Blacklist"),
     width = 120,      -- Optional
     height = 25,      -- Optional
-    tooltip = "打断黑名单", -- Optional tooltip
+    tooltip = getLocalizedText("打断黑名单", "Interrupt Blacklist"), -- Optional tooltip
     key = "interruptSpellsblacklist",
     onClick = function() 
         -- print("clicked") 
@@ -632,10 +663,10 @@ gui:Category("Mia_Warrior")
 })
 :Spacer() 
 :Button({
-    text = "interrupt white list",
+    text = getLocalizedText("打断白名单", "Interrupt Whitelist"),
     width = 120,      -- Optional
     height = 25,      -- Optional
-    tooltip = "打断白名单", -- Optional tooltip
+    tooltip = getLocalizedText("打断白名单", "Interrupt Whitelist"), -- Optional tooltip
     key = "interruptSpellswhitelist",
     onClick = function() 
         -- print("clicked") 
@@ -643,67 +674,67 @@ gui:Category("Mia_Warrior")
     end
 })
 :Slider({
-    text = "interrupt threshold",
+    text = getLocalizedText("打断阈值", "Interrupt Threshold"),
     key = "feature.interruptthreshold",
     min = 10,
     max = 90,
     step = 1,
     default = 50,
-    tooltip = "打断阈值", -- Optional tooltip
+    tooltip = getLocalizedText("打断阈值", "Interrupt Threshold"), -- Optional tooltip
     onChange = function(self, value)
         interruptthreshold = value
     end
 })
-:Tab("Draw")
+:Tab(getLocalizedText("绘制", "Draw"))
     :Checkbox({
-        text = "Draw",
+        text = getLocalizedText("开启绘画", "Enable Drawing"),
         key = "feature.draw",  -- Config key for saving
         default = true,          -- Default value
-        tooltip = "开启绘画", -- Optional tooltip
+        tooltip = getLocalizedText("开启绘画", "Enable Drawing"), -- Optional tooltip
         onChange = function(self, checked)
             -- print("Checkbox changed:", checked)
             isdraw = checked
         end
     })
-    :Header({ text = "Draw Settings" })
+    :Header({ text = getLocalizedText("绘制设置", "Draw Settings") })
     :Checkbox({
-        text = "only in combat",
+        text = getLocalizedText("只在战斗中绘制", "Only Draw in Combat"),
         key = "feature.onlyincombat",  -- Config key for saving
         default = false,          -- Default value
-        tooltip = "是否只在战斗中绘制", -- Optional tooltip
+        tooltip = getLocalizedText("只在战斗中绘制", "Only Draw in Combat"), -- Optional tooltip
         onChange = function(self, checked)
             -- print("Checkbox changed:", checked)
             onlyincombat = checked
         end
     })
     :Slider({
-        text = "Draw line width",
+        text = getLocalizedText("绘制线宽度", "Draw Line Width"),
         key = "feature.drawLineWidth",
         min = 1,
         max = 5,
         default = 2,
-        tooltip = "绘制线宽度", -- Optional tooltip
+        tooltip = getLocalizedText("绘制线宽度", "Draw Line Width"), -- Optional tooltip
         onChange = function(self, value)
             -- print("使用生命药水阈值:", value)
             drawLineWidth = value
         end
     })
-    :Header({ text = "Draw Function" })
+    :Header({ text = getLocalizedText("绘制函数", "Draw Function") })
     :Checkbox({
-        text = "Player facing and whether lost autoAttack",
+        text = getLocalizedText("玩家面向和是否丢失平砍", "Player facing and whether lost autoAttack"),
         key = "feature.autoAttack",  -- Config key for saving
         default = true,          -- Default value
-        tooltip = "玩家面向和是否丢失平砍", -- Optional tooltip
+        tooltip = getLocalizedText("玩家面向和是否丢失平砍", "Player facing and whether lost autoAttack"), -- Optional tooltip
         onChange = function(self, checked)
             -- print("Checkbox changed:", checked)
             drawFace = checked
         end
     })
     :Checkbox({
-        text = "Connection between player and target",
+        text = getLocalizedText("玩家和目标连线", "Draw Connection between player and target"),
         key = "feature.Connection",  -- Config key for saving
         default = true,          -- Default value
-        tooltip = "玩家面向目标时是否绘制", -- Optional tooltip
+        tooltip = getLocalizedText("玩家和目标连线", "Draw Connection between player and target"), -- Optional tooltip
         onChange = function(self, checked)
             -- print("Checkbox changed:", checked)
             drawConnection = checked
@@ -1839,14 +1870,17 @@ end, "WARRIOR", 3, "Mia_Warrior")
 
 
 
--- 获取客户端语言，增强多语言兼容性
-local clientLocale = GetLocale()
-local isChineseClient = clientLocale == "zhCN" or clientLocale == "zhTW"
-
 Aurora.EventHandler:RegisterEvent("SPELL_CAST_SUCCESS", function(eventData)
     if eventData.source.guid == UnitGUID("player") then
         local spellId, spellName = unpack(eventData.params)
-        -- 使用法术ID而非名称进行判断，确保多语言兼容性
+        -- print("施法成功",spellName,castedCount)
+        -- if  spellName ~= "盾牌格挡" and spellName ~= "法术反射" and spellName ~= "防御姿态" and spellName ~= "战斗姿态" and spellName ~= "拳击" and spellName ~= "英勇飞跃" and spellName ~= "挑战怒吼" and spellName ~= "盾墙" and spellName ~= "无视苦痛" and spellName ~= "破釜沉舟" and spellName ~= "嘲讽" and spellName ~= "冲锋" then
+        --     castedCount = castedCount + 1
+        --     --应对技能计数
+        --     yingduicount = yingduicount + 1
+        --     isLT = true
+        -- end
+
         if spellId ~= 2565 and spellId ~= 23920 and spellId ~= 386208 and spellId ~= 386164 and spellId ~= 6552 and spellId ~= 6544 and spellId ~= 386071 and spellId ~= 871 and spellId ~= 190456 and spellId ~= 12975 and spellId ~= 355 and spellId ~= 100 then
             castedCount = castedCount + 1
             --应对技能计数
@@ -1871,8 +1905,10 @@ Aurora.EventHandler:RegisterEvent("SPELL_CAST_SUCCESS", function(eventData)
             addSpellStat = nil
             castedCount = 0
         end
-        
+        -- print(string.format("Cast %s (ID: %d)", spellName, spellId))
         if spellId == tonumber(addSpellStat) then
+            -- isLoop = true
+            -- print("相同技能")
             addSpellStat = nil
             castedCount = 0
         end
@@ -1880,111 +1916,119 @@ Aurora.EventHandler:RegisterEvent("SPELL_CAST_SUCCESS", function(eventData)
 end)
 
 local autoQuanji_toggle = Aurora:AddGlobalToggle({
-    label = "auto Interrupt",              -- Display name (max 11 characters)
+    label = getLocalizedText("自动打断", "auto Interrupt"),              -- Display name (max 11 characters)
     var = "autoQuanji_toggle",       -- Unique identifier for saving state
     icon = 6552, -- Icon texture or spell ID
-    tooltip = getLocalizedDescription("自动打断", "Automatic Interruption"), -- Tooltip text
+    tooltip = getLocalizedText("自动打断", "auto Interrupt"), -- Tooltip text
     onClick = function(value)    -- Optional callback when clicked
+        -- print("自动打断:", value)
         autoQuanji = value
     end
 })
 
 local autoChaofeng_toggle = Aurora:AddGlobalToggle({
-    label = "auto taunt",              -- Display name (max 11 characters)
+    label = getLocalizedText("自动嘲讽", "auto taunt"),              -- Display name (max 11 characters)
     var = "autoChaofeng_toggle",       -- Unique identifier for saving state
     icon = 355, -- Icon texture or spell ID
-    tooltip = getLocalizedDescription("自动嘲讽", "Auto Taunt"), -- Tooltip text
+    tooltip = getLocalizedText("自动嘲讽", "auto taunt"), -- Tooltip text
     onClick = function(value)    -- Optional callback when clicked
+        -- print("自动打断:", value)
         isChaofeng = value
     end
 })
-
 local autoGongqiang_toggle = Aurora:AddGlobalToggle({
-    label = "battle shout",              -- Display name (max 11 characters)
+    label = getLocalizedText("自动战斗怒吼", "battle shout"),              -- Display name (max 11 characters)
     var = "autoGongqiang_toggle",       -- Unique identifier for saving state
     icon = 6673, -- Icon texture or spell ID
-    tooltip = getLocalizedDescription("脱战生效，战斗中用宏插入", "Active out of combat, use macro in combat"), -- Tooltip text
+    tooltip = getLocalizedText("自动战斗怒吼", "battle shout"), -- Tooltip text
     onClick = function(value)    -- Optional callback when clicked
+        -- print("自动切换目标:", value)
         isGongqiang = value
     end
 })
 
 local autoFS_toggle = Aurora:AddGlobalToggle({
-    label = "spell reflection",              -- Display name (max 11 characters)
+    label = getLocalizedText("自动法术反射", "spell reflection"),              -- Display name (max 11 characters)
     var = "autoFS_toggle",       -- Unique identifier for saving state
     icon = 23920, -- Icon texture or spell ID
-    tooltip = getLocalizedDescription("自动法术反射", "Auto Spell Reflection"), -- Tooltip text
+    tooltip = getLocalizedText("自动法术反射", "spell reflection"), -- Tooltip text
     onClick = function(value)    -- Optional callback when clicked
+        -- print("自动法术反射:", value)
         isFSFS = value
     end
 })
 
+
+
 local autoSwitchTarget_toggle = Aurora:AddGlobalToggle({
-    label = "auto switch target",              -- Display name (max 11 characters)
+    label = getLocalizedText("自动切换目标", "auto switch target"),              -- Display name (max 11 characters)
     var = "autoSwitchTarget_toggle",       -- Unique identifier for saving state
     icon = 76290, -- Icon texture or spell ID
-    tooltip = getLocalizedDescription("丢失自动攻击切换目标，生效范围：4-8码", "Switch targets when auto-attack is lost. Effective range: 4-8 yards"), -- Tooltip text
+    tooltip = getLocalizedText("丢失自动攻击切换目标,生效范围:4-8码", "lose auto-Attack,switch targets.effective range:4-8"), -- Tooltip text
     onClick = function(value)    -- Optional callback when clicked
+        -- print("自动切换目标:", value)
         isSwitchTarget = value
     end
 })
-
 local autoDunpaichongfeng_toggle = Aurora:AddGlobalToggle({
-    label = "sheild charge",              -- Display name (max 11 characters)
+    label = getLocalizedText("盾牌冲锋", "should charge"),              -- Display name (max 11 characters)
     var = "autoDunpaichongfeng_toggle",       -- Unique identifier for saving state
     icon = 385952, -- Icon texture or spell ID
-    tooltip = getLocalizedDescription("冲锋最近的，防止位移", "Charge the nearest target to prevent displacement"), -- Tooltip text
+    tooltip = getLocalizedText("冲锋最近的,防止位移", "should charge"), -- Tooltip text
     onClick = function(value)    -- Optional callback when clicked
+        -- print("自动切换目标:", value)
         isDunpaichongfeng = value
     end
 })
-
 local autoCZCD_toggle = Aurora:AddGlobalToggle({
-    label = "demoralizing shout",              -- Display name (max 11 characters)
+    label = getLocalizedText("挫志怒吼卡cd", "demoralizing shout on cooldown"),              -- Display name (max 11 characters)
     var = "autoCZCD_toggle",       -- Unique identifier for saving state
     icon = 1160, -- Icon texture or spell ID
-    tooltip = getLocalizedDescription("挫志怒吼卡CD", "Demoralizing Shout on Cooldown"), -- Tooltip text
+    tooltip = getLocalizedText("挫志怒吼卡cd", "demoralizing shout on cooldown"), -- Tooltip text
     onClick = function(value)    -- Optional callback when clicked
+        -- print("自动打断:", value)
         isCZCD = value
     end
 })
-
 local autoLonghou_toggle = Aurora:AddGlobalToggle({
-    label = "thunderous roar",              -- Display name (max 11 characters)
+    label = getLocalizedText("雷鸣之吼", "thunderous roar"),              -- Display name (max 11 characters)
     var = "autoLonghou_toggle",       -- Unique identifier for saving state
     icon = 384318, -- Icon texture or spell ID
-    tooltip = getLocalizedDescription("站住不动或者周围4目标以上", "When standing still or 4+ targets nearby"), -- Tooltip text
+    tooltip = getLocalizedText("站住不动或者周围4目标以上", "thunderous roar"), -- Tooltip text
     onClick = function(value)    -- Optional callback when clicked
+        -- print("自动切换目标:", value)
         isLonghou = value
     end
 })
 
 local autoTianshen_toggle = Aurora:AddGlobalToggle({
-    label = "avenging wrath",              -- Display name (max 11 characters)
+    label = getLocalizedText("自动天神下凡", "avenging wrath"),              -- Display name (max 11 characters)
     var = "autoTianshen_toggle",       -- Unique identifier for saving state
     icon = 107574, -- Icon texture or spell ID
-    tooltip = getLocalizedDescription("自动天神下凡，站住不动或者5目标以上", "Auto Avenging Wrath when standing still or 5+ targets nearby"), -- Tooltip text
+    tooltip = getLocalizedText("自动天神下凡,站住不动或者5目标以上", "avenging wrath"), -- Tooltip text
     onClick = function(value)    -- Optional callback when clicked
+        -- print("自动切换目标:", value)
         autoTianshen = value
     end
 })
-
 local autopohuaizhe_toggle = Aurora:AddGlobalToggle({
-    label = "devastator",              -- Display name (max 11 characters)
+    label = getLocalizedText("自动破坏者", "devastator"),              -- Display name (max 11 characters)
     var = "autopohuaizhe_toggle",       -- Unique identifier for saving state
     icon = 228920, -- Icon texture or spell ID
-    tooltip = getLocalizedDescription("自动破坏者", "Auto Devastator"), -- Tooltip text
+    tooltip = getLocalizedText("自动破坏者", "devastator"), -- Tooltip text
     onClick = function(value)    -- Optional callback when clicked
+        -- print("自动切换目标:", value)
         autopohuaizhe = value
     end
 })
 
 local autoyongshizhimao_toggle = Aurora:AddGlobalToggle({
-    label = "warrior's spear",              -- Display name (max 11 characters)
+    label = getLocalizedText("自动勇士之矛", "warrior's spear"),              -- Display name (max 11 characters)
     var = "autoyongshizhimao_toggle",       -- Unique identifier for saving state
     icon = 376079, -- Icon texture or spell ID
-    tooltip = getLocalizedDescription("自动勇士之矛", "Auto Warrior's Spear"), -- Tooltip text
+    tooltip = getLocalizedText("自动勇士之矛", "warrior's spear"), -- Tooltip text
     onClick = function(value)    -- Optional callback when clicked
+        -- print("自动切换目标:", value)
         autoyongshizhimao = value
     end
 })
@@ -2026,31 +2070,10 @@ if autoCZCD_toggle:GetValue() then
     isCZCD = true
 end
 
--- 自动法术反射功能
 if autoFS_toggle:GetValue() then
+    -- print("自动法术反射：",autoFS_toggle:GetValue())
     isFSFS = true
 end
-
--- 添加法术名称到法术ID的映射表，增强多语言兼容性
-local spellIdToName = {
-    [100] = getLocalizedDescription("冲锋", "Charge"),
-    [355] = getLocalizedDescription("嘲讽", "Taunt"),
-    [23920] = getLocalizedDescription("法术反射", "Spell Reflection"),
-    [6552] = getLocalizedDescription("拳击", "Pummel"),
-    [1160] = getLocalizedDescription("挫志怒吼", "Demoralizing Shout"),
-    [1161] = getLocalizedDescription("挑战怒吼", "Challenging Shout"),
-    [12975] = getLocalizedDescription("破釜沉舟", "Last Stand"),
-    [190456] = getLocalizedDescription("无视苦痛", "Ignore Pain"),
-    [202168] = getLocalizedDescription("胜利在望", "Victory Rush"),
-    [228920] = getLocalizedDescription("破坏者", "Devastator"),
-    [376079] = getLocalizedDescription("勇士之矛", "Warrior's Spear"),
-    [384318] = getLocalizedDescription("雷鸣之吼", "Thunderous Roar"),
-    [385952] = getLocalizedDescription("盾牌冲锋", "Shield Charge"),
-    [386071] = getLocalizedDescription("瓦解怒吼", "Intimidating Shout"),
-    [386164] = getLocalizedDescription("战斗姿态", "Battle Stance"),
-    [386208] = getLocalizedDescription("防御姿态", "Defensive Stance"),
-    [394062] = getLocalizedDescription("撕裂", "Riposte")
-}
 
 -- Later you can check the toggle state
 if autoQuanji_toggle:GetValue() then
@@ -2077,50 +2100,55 @@ Macro:RegisterCommand("IgnoringPain", function(value)
     Aurora.Config:Write("graphics.isIgnoringPain", value)
 end, "Casts the specified spell")
 
--- 多语言宏命令描述
-local function getLocalizedDescription(zhDesc, enDesc)
-    return isChineseClient and zhDesc or enDesc
-end
-
 Macro:RegisterCommand("SwitchTarget", function()
     isSwitchTarget = not isSwitchTarget
+    -- Aurora.Config:Write("feature.isSwitchTarget", isSwitchTarget)
     autoSwitchTarget_toggle:SetValue(isSwitchTarget)
-end, getLocalizedDescription("切换目标", "Switch Target"))
+    -- print("切换目标：",isSwitchTarget)
+end, "切换目标(Switch Target)")
 
 Macro:RegisterCommand("SpellReflection", function()
     isFSFS = not isFSFS
     autoFS_toggle:SetValue(isFSFS)
-end, getLocalizedDescription("法术反射", "Spell Reflection"))
-
+    -- print("法术反射：",isFSFS)
+end, "法术反射(Spell Reflection)")
 Macro:RegisterCommand("ridicule", function()
     isChaofeng = not isChaofeng
+    -- Aurora.Config:Write("feature.isCZCD", isCZCD)
     autoChaofeng_toggle:SetValue(isChaofeng)
-end, getLocalizedDescription("自动嘲讽", "auto taunt"))
+    -- print("自动嘲讽：",isChaofeng)
+end, "自动嘲讽(auto taunt)")
 
 Macro:RegisterCommand("Shout", function()
     isCZCD = not isCZCD
+    -- Aurora.Config:Write("feature.isCZCD", isCZCD)
     autoCZCD_toggle:SetValue(isCZCD)
-end, getLocalizedDescription("挫志怒吼卡CD", "Demoralizing Shout on CD"))
-
+    -- print("挫志怒吼卡cd：",isCZCD)
+end, "挫志怒吼卡cd(demoralizing shout on cooldown)")
 Macro:RegisterCommand("AutomaticInterruption", function()
     autoQuanji = not autoQuanji
+    -- Aurora.Config:Write("feature.isCZCD", isCZCD)
     autoQuanji_toggle:SetValue(autoQuanji)
-end, getLocalizedDescription("自动打断", "Automatic Interruption"))
-
+    -- print("自动打断：",autoQuanji)
+end, "自动打断(Automatic Interruption)")
 Macro:RegisterCommand("ShieldCharge", function()
     isDunpaichongfeng = not isDunpaichongfeng
+    -- Aurora.Config:Write("feature.isDunpaichongfeng", isDunpaichongfeng)
     autoDunpaichongfeng_toggle:SetValue(isDunpaichongfeng)
-end, getLocalizedDescription("盾牌冲锋", "Shield Charge"))
-
+    -- print("盾牌冲锋：",isDunpaichongfeng)
+end, "盾牌冲锋(Shield Charge)")
 Macro:RegisterCommand("ThunderousRoar", function()
     isLonghou = not isLonghou
+    -- Aurora.Config:Write("feature.isLonghou", isLonghou)
     autoLonghou_toggle:SetValue(isLonghou)
-end, getLocalizedDescription("雷鸣之吼", "Thunderous Roar"))
-
+    -- print("雷鸣之吼：",isLonghou)
+end, "雷鸣之吼(Thunderous Roar)")
 Macro:RegisterCommand("BKB", function()
     autoTianshen = not autoTianshen
+    -- Aurora.Config:Write("feature.isLonghou", isLonghou)
     autoTianshen_toggle:SetValue(autoTianshen)
-end, getLocalizedDescription("天神下凡", "Avenging Wrath"))
+    -- print("天神下凡：",autoTianshen)
+end, "天神下凡(avenging wrath)")
 
 
 -- 修复命令解析问题：将cast命令改为使用Macro:RegisterCommand以确保正确解析参数

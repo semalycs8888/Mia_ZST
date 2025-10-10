@@ -1,0 +1,96 @@
+-- -- 初始化Aurora全局表（如果不存在）
+-- Aurora = Aurora or {}
+
+-- -- 初始化Spellbook模块并添加到Aurora全局表
+-- local Spellbook = Aurora.Spellbook or {}
+-- Aurora.Spellbook = Spellbook
+
+
+
+-- local NewSpell = Aurora.SpellHandler.NewSpell
+-- Spellbook.spellbook = {
+--     spells = {
+--         AutoAttack = NewSpell(6603),
+--         --冲锋
+--         CHONGFENG = NewSpell(100),
+--         --[英勇投掷]
+--         YINGYONGTOUZHI = NewSpell(57755),
+--         --[勇士之矛]
+--         YONGSHIZHIMAO = NewSpell(376079),
+--         --嘲讽
+--         CHAOFENG = NewSpell(355),
+--         --[法术反射]
+--         FASHUFANSHE = NewSpell(23920),
+--         --[防御姿态]
+--         FANGYUZITAI = NewSpell(386208),
+--         --[天神下凡] 107574
+--         TIANSHENXIAFAN = NewSpell(107574),
+
+--         --[狂暴之怒] 18499
+--         KUANGBAOZHINU = NewSpell(18499),
+--         --[集结呐喊] 97462
+--         JIJIENAHAN = NewSpell(97462),
+--         --[战斗姿态] 386164
+--         ZHANDOUZITAI = NewSpell(386164),
+--         --[雷霆一击] 6343
+--         LEITINGYIJI = NewSpell(6343),
+--         --[战斗怒吼] 6673
+--         ZHANDOUNUHOU = NewSpell(6673),
+--         --[盾牌格挡]2565
+--         DUNPAIGEDANG = NewSpell(2565),
+--         --[震荡波]46968
+--         ZHENDANGBO = NewSpell(46968),
+--         --[拳击]6552
+--         QUANJI = NewSpell(6552),
+--         --[盾牌猛击]23922
+--         DUNPAIMENGJI = NewSpell(23922),
+--         --[风暴之锤]107570
+--         FANGBAOZHICHUI = NewSpell(107570),
+--         --[斩杀]163201
+--         ZHANSHA = NewSpell(163201),
+--         --[斩杀2]163201
+--         ZHANSHA2 = NewSpell(163201),
+--         --[胜利在望]202168
+--         SHENGLIZAIWANG = NewSpell(202168),
+--         --[复仇]6572
+--         FUCHOU = NewSpell(6572),
+--         --[复仇]6572
+--         FUCHOU2 = NewSpell(6572),
+--         --[盾墙]871
+--         DUNQIANG = NewSpell(871),
+--         --[挑战怒吼]1161
+--         TIAOZHANNUHOU = NewSpell(1161),
+--         --[盾牌冲锋]385952
+--         DUNPAICHONGFENG = NewSpell(385952),
+--         --[挫志怒吼]1160
+--         CUOZHINUHOU = NewSpell(1160),
+--         --[破釜沉舟]12975
+--         POFUCHENZHOU = NewSpell(12975),
+--         --[撕裂]394062
+--         SILIE = NewSpell(394062),
+--         --[无视苦痛]190456
+--         WUSHITONGKU = NewSpell(190456),
+--         --[破胆怒吼]5246
+--         PODANNUHOU = NewSpell(5246),
+--         --[苦痛免疫]383762
+--         TONGKUMIANYI = NewSpell(383762),
+--         --[刺耳怒吼]12323
+--         CIERNUHOU = NewSpell(12323),
+--         --[雷鸣之吼]384318
+--         LEIMINGZHIHOU = NewSpell(384318),
+--         --[瓦解怒吼]386071
+--         WAJIENUHOU = NewSpell(386071),
+--         --[破坏者]228920
+--         POHUAIZHE = NewSpell(228920),
+--         --[援护]3411
+--         YUANHU = NewSpell(3411),
+--     },
+--     auras = {
+        
+--     },
+--     talents = {
+--         CUISI = NewSpell(29725)
+--     }
+-- }
+
+-- Aurora.SpellHandler.PopulateSpellbook(Spellbook.spellbook, "WARRIOR", 3, "Mia_Warrior")

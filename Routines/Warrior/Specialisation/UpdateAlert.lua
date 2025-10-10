@@ -13,6 +13,14 @@ UpdateAlert.frame = nil
 UpdateAlert.messageLabel = nil
 UpdateAlert.closeButton = nil
 
+-- 获取客户端语言
+local clientLocale = GetLocale()
+local isChineseClient = clientLocale == "zhCN" or clientLocale == "enUS"
+
+-- 多语言文本获取函数
+local function getLocalizedText(zhText, enText)
+    return isChineseClient and zhText or enText
+end
 -- 初始化GUI
 function UpdateAlert:Initialize()
     if self.frame then
@@ -30,7 +38,7 @@ function UpdateAlert:CreateMainFrame(title)
     -- 如果没有提供标题，使用默认标题
     title = title or "提示"
     
-    local frame = StdUi:Window(UIParent, 350, 330, "提示")
+    local frame = StdUi:Window(UIParent, 300, 330, getLocalizedText("提示", "Alert"))
     
     -- 移除右上角关闭按钮
     if frame.closeBtn then
@@ -81,8 +89,8 @@ function UpdateAlert:CreateCloseButton()
     local frame = self.frame
     
     -- 关闭按钮
-    self.closeButton = StdUi:Button(frame, 100, 30, "确定")
-    self.closeButton:SetPoint("CENTER", frame, "CENTER", 0, -80)
+    self.closeButton = StdUi:Button(frame, 90, 25, getLocalizedText("确定", "Confirm"))
+    self.closeButton:SetPoint("CENTER", frame, "CENTER", 0, -131)
     
     -- 设置按钮为红色
     if self.closeButton.texture then

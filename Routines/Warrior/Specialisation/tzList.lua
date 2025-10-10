@@ -5,8 +5,21 @@ Aurora = Aurora or {}
 local TZList = Aurora.TZList or {}
 Aurora.TZList = TZList
 
+if not Aurora.Tool then
+    require "Tool"
+end
+local Tool = Aurora.Tool or {}
+
 -- 加载StdUi库
 local StdUi = LibStub("AuroraStdUi")
+-- 获取客户端语言
+local clientLocale = GetLocale()
+local isChineseClient = clientLocale == "zhCN" or clientLocale == "enUS"
+
+-- 多语言文本获取函数
+local function getLocalizedText(zhText, enText)
+    return isChineseClient and zhText or enText
+end
 
 -- GUI相关变量
 TZList.configKey = ""
@@ -70,7 +83,7 @@ function TZList:CreateInputArea()
     local frame = self.frame
     
     -- 输入标签
-    local inputLabel = StdUi:Label(frame, "输入法术ID")
+    local inputLabel = StdUi:Label(frame, getLocalizedText("输入ID", "Input ID"))
     inputLabel:SetPoint("TOPLEFT", frame, "TOPLEFT", 20, -40)
     
     -- 输入框
@@ -102,12 +115,12 @@ function TZList:CreateActionButtons()
     local frame = self.frame
     
     -- 添加按钮
-    self.addButton = StdUi:Button(frame, 120, 30, "添加")
+    self.addButton = StdUi:Button(frame, 120, 30, getLocalizedText("添加", "Add"))
     self.addButton:SetPoint("TOPLEFT", frame, "TOPLEFT", 50, -320)
     self.addButton:SetScript("OnClick", function() self:AddItem() end)
     
     -- 删除按钮
-    self.removeButton = StdUi:Button(frame, 120, 30, "删除")
+    self.removeButton = StdUi:Button(frame, 120, 30, getLocalizedText("删除", "Remove"))
     self.removeButton:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -50, -320)
     self.removeButton:SetScript("OnClick", function() self:RemoveItem() end)
 end
@@ -184,7 +197,7 @@ function TZList:UpdateListDisplay()
     
     -- 显示空列表消息
     if #self.itemList == 0 then
-        local noEntriesLabel = StdUi:Label(self.listFrame.scrollChild, "No items in list")
+        local noEntriesLabel = StdUi:Label(self.listFrame.scrollChild, getLocalizedText("空列表", "No items in list"))
         noEntriesLabel:SetPoint("CENTER", self.listFrame.scrollChild, "CENTER", 0, 0)
         self.listButtons[1] = noEntriesLabel
         return
@@ -193,6 +206,7 @@ function TZList:UpdateListDisplay()
     -- 创建新按钮
     for i, itemText in ipairs(self.itemList) do
         local spellname = Aurora.dungronSpell[tonumber(itemText)] or "未知"
+        -- local spellname = Tool.GetSpellNameByID(itemText) or "未知"
         local button = StdUi:Button(self.listFrame.scrollChild, 320, 25, Aurora.texture(tonumber(itemText))..itemText .. "(" .. spellname .. ")")
         button:SetPoint("TOPLEFT", self.listFrame.scrollChild, "TOPLEFT", 5, -((i - 1) * 30))
         
