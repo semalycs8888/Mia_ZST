@@ -136,6 +136,10 @@ local baofayao = true
 local shengmingyao = true
 local shengmingyaoyuzhi = 20
 local isuseTrinket = true
+local isuseTrinket2 = true
+local isuseTrinket1 = true
+local trinket1state = "revenge"
+local trinket2state = "revenge"
 local useTrinkethp = 50
 local isFbaoSp = true
 --用户设置血量阈值
@@ -156,6 +160,7 @@ local drawConnection = true
 local isdraw = true
 local onlyincombat = true
 local drawLineWidth = 2
+local farDistance = false
 -- 将respondSpells添加到Aurora全局表，使其可以在其他文件中访问
 Aurora.respondSpells = Aurora.respondSpells or {
     1237071,--石拳
@@ -459,15 +464,69 @@ gui:Category("Mia_Warrior")
     end
    })
     :Header({ text = "trinket" })
-   :Checkbox({
+    :Checkbox({
     text = "use trinket",
     key = "feature.useTrinket",  -- Config key for saving
     default = true,          -- Default value
-    tooltip = "如果是爆发饰品跟随天神下凡.如果是防御饰品,则在血量低于设定值时使用(If it's an offensive trinket, use it along with avenging Wrath. If it's a defensive trinket, use it when your health drops below the set value.)", -- Optional tooltip
+    tooltip = "是否使用饰品", -- Optional tooltip
     onChange = function(self, checked)
         isuseTrinket = checked
     end
     })
+    :Header({ text = " " })
+    :Checkbox({
+    text = "use trinket 1",
+    key = "feature.useTrinket1",  -- Config key for saving
+    default = true,          -- Default value
+    tooltip = "是否使用饰品2", -- Optional tooltip
+    onChange = function(self, checked)
+        isuseTrinket1 = checked
+    end
+    })
+    :Dropdown({
+        text = "trinket 1",
+        key = "feature.trinket1",
+        options = {
+            { text = "BKB", value = "revenge" },
+            { text = "low hp", value = "lowhp" },
+            { text = "counter ability", value = "counterAbility" }
+        },
+        default = "revenge",
+        multi = false,           -- Set to true for multi-select
+        width = 200,            -- Optional
+        tooltip = "Select trinket 1",
+        onChange = function(self, value)
+            -- print("trinket 1 changed:", value)
+            trinket1state = value
+        end
+    })
+    :Checkbox({
+    text = "use trinket 2",
+    key = "feature.useTrinket2",  -- Config key for saving
+    default = true,          -- Default value
+    tooltip = "是否使用饰品2", -- Optional tooltip
+    onChange = function(self, checked)
+        isuseTrinket2 = checked
+    end
+    })
+    :Dropdown({
+        text = "trinket 2",
+        key = "feature.trinket2",
+        options = {
+            { text = "BKB", value = "revenge" },
+            { text = "low hp", value = "lowhp" },
+            { text = "counter ability", value = "counterAbility" }
+        },
+        default = "revenge",
+        multi = false,           -- Set to true for multi-select
+        width = 200,            -- Optional
+        tooltip = "Select trinket 2",
+        onChange = function(self, value)
+            -- print("trinket 2 changed:", value)
+            trinket2state = value
+        end
+    })
+
     :Slider({
     text = "Use trinket when the health value is lower than the set value",
     key = "feature.trinketHP",  -- Config key for saving
@@ -763,6 +822,10 @@ gui:Category("Mia_Warrior")
     drawFace = Aurora.Config:Read("feature.autoAttack")
     onlyincombat = Aurora.Config:Read("feature.onlyincombat")
     drawLineWidth = Aurora.Config:Read("feature.drawLineWidth")
+    isuseTrinket2 = Aurora.Config:Read("feature.useTrinket2")
+    isuseTrinket1 = Aurora.Config:Read("feature.useTrinket1")
+    trinket1state = Aurora.Config:Read("feature.trinket1")
+    trinket2state = Aurora.Config:Read("feature.trinket2")
 end
    
 
@@ -848,31 +911,128 @@ local function draw()
 end
 
 --使用饰品
+local function isuseTinketabletoJS()
+    local target = Aurora.UnitManager:Get("target")
+    if player.aura(871) or player.aura(12975) or (target.exists and target.aura(1160)) then
+        return false
+    end
+
+    if isDUNQIANG then
+        if spellbooks.spells.DUNQIANG:ready() then
+            return false
+        end
+    end
+    if isCUOZHINUHOU then
+        if spellbooks.spells.CUOZHINUHOU:getcd() == 0 then
+            return false
+        end
+    end
+    if isPOFUCHENZHOU then
+        if spellbooks.spells.POFUCHENZHOU:ready() then
+            return false
+        end
+    end
+    return true
+end
+--使用饰品
 local function useTrinket()
-    local allEquipped = Aurora.ItemHandler.Armory
+    local trinket1ID = GetInventoryItemID("player",13)
+    local trinket2ID = GetInventoryItemID("player",14)
+    local trinket1 = Aurora.ItemHandler.NewItem(trinket1ID)
+    local trinket2 = Aurora.ItemHandler.NewItem(trinket2ID)
     target = Aurora.UnitManager:Get("target")
-    for _, item in pairs(allEquipped) do
-        if item.itemSlot == "TRINKET" and item.hasOnUse and item:ready() and item.id ~= 190958 then
-            if item.id == 242391 or item.id == 232543 then
-                -- print(player.hp,useTrinkethp)
-                if player.hp < useTrinkethp then
-                    if item:usable(player) then
-                        item:use(player)
-                    else
-                        item:use(target)
+    if  isuseTrinket1 then
+        if trinket1:ready() then
+            if trinket1state == "revenge" then
+                if player.aura(107574) then
+                    if trinket1:usable(player) and trinket1:ready() then
+                        return trinket1:use(player)
+                    elseif trinket1:usable(target) and trinket1:ready() then
+                        return trinket1:use(target)
                     end
                 end
-            elseif player.aura(107574) then
-                if item:usable(player) then
-                    item:use(player)
-                else
-                    item:use(target)
+            elseif trinket1state == "lowhp" then
+                if player.hp < useTrinkethp then
+                    if trinket1:usable(player) and trinket1:ready() then
+                        return trinket1:use(player)
+                    elseif trinket1:usable(target) and trinket1:ready() then
+                        return trinket1:use(target)
+                    end
+                end
+            elseif trinket1state == "counterAbility" then
+                if isuseTinketabletoJS() then
+                      local activeenemies = Aurora.activeenemies
+                        if activeenemies then
+                            activeenemies:each(function(enemy, index, uptime)
+                                local enemyCastingId = enemy.castingspellid
+                                if enemyCastingId then
+                                    -- print("正在施法",enemyCastingId)
+                                    for k, v in pairs(Aurora.respondSpells) do
+                                        if tonumber(v) == enemyCastingId then
+                                            if trinket1:usable(player) and trinket1:ready() then
+                                                return trinket1:use(player)
+                                            elseif trinket1:usable(target) and trinket1:ready() then
+                                                return trinket1:use(target)
+                                                -- return true
+                                            end
+                                        end
+                                    end
+                                end
+                            end)
+                        end
+                    end
+                end
+            end
+        end
+        if isuseTrinket2 then
+        if trinket2:ready() then
+            if trinket2state == "revenge" then
+                if player.aura(107574) then
+                    if trinket2:usable(player) and trinket2:ready() then
+                        return trinket2:use(player)
+                    elseif trinket2:usable(target) and trinket2:ready() then
+                        return trinket2:use(target)
+                    end
+                end
+            elseif trinket2state == "lowhp" then
+                -- print(player.hp,useTrinkethp)
+                if player.hp < useTrinkethp then
+                    -- print("使用饰品2",trinket2:usable(player),trinket2:ready())
+                    if trinket2:usable(player) and trinket2:ready() then
+
+                        return trinket2:use(player)
+                    elseif trinket2:usable(target) and trinket2:ready() then
+                        return trinket2:use(target)
+                    end
+                end
+            elseif trinket2state == "counterAbility" then
+                if isuseTinketabletoJS() then
+                    
+                      local activeenemies = Aurora.activeenemies
+                        if activeenemies then
+                            activeenemies:each(function(enemy, index, uptime)
+                                local enemyCastingId = enemy.castingspellid
+                                if enemyCastingId then
+                                    -- print("正在施法",enemyCastingId)
+                                    for k, v in pairs(Aurora.respondSpells) do
+                                        if tonumber(v) == enemyCastingId then
+                                            if trinket2:usable(player) and trinket2:ready() then
+                                                return trinket2:use(player)
+                                            elseif trinket2:usable(target) and trinket2:ready() then
+                                                return trinket2:use(target)
+                                                -- return true
+                                            end
+                                        end
+                                    end
+                                end
+                            end)
+                        end
+                    end
                 end
             end
         end
     end
     
-end
 local function controlexec(spell)
      local activeenemies = Aurora.activeenemies
         if activeenemies then
@@ -959,6 +1119,10 @@ local function isBaofayao()
 end
 
 local function injuryResponse()
+    -- print("injuryResponse")
+    if yingdui == nil then
+        return
+    end
       local activeenemies = Aurora.activeenemies
         if activeenemies then
             activeenemies:each(function(enemy, index, uptime)
@@ -967,15 +1131,34 @@ local function injuryResponse()
                     -- print("正在施法",enemyCastingId)
                     for k, v in pairs(Aurora.respondSpells) do
                         if tonumber(v) == enemyCastingId then
-                                if yingdui then
-                                    yingdui:cast(player)
+                                if yingdui:castable(player) then
+                                   return yingdui:cast(player)
                                 end
-                                return true
+                                -- return true
+                            
                         end
                     end
                 end
             end)
         end
+end
+
+local function isJiaJian(spell)
+    target = Aurora.UnitManager:Get("target")
+    -- print(spell.name)
+    if player.aura(871) or player.aura(12975) or (target.exists and target.aura(1160)) then
+
+        return false
+    end
+    -- if isDUNQIANG and spellbooks.spells.DUNQIANG:charges() >= 1 and spellbooks.spells.DUNQIANG == spell then
+    --     return true
+    
+    -- elseif isPOFUCHENZHOU and spellbooks.spells.POFUCHENZHOU:ready() and spellbooks.spells.POFUCHENZHOU == spell then
+    --     return true
+    --  elseif isCUOZHINUHOU and spellbooks.spells.CUOZHINUHOU:getcd() == 0 and spellbooks.spells.CUOZHINUHOU == spell then
+    --     return true
+    -- end
+    return true
 end
 
 spellbooks.spells.TIANSHENXIAFAN:callback(function(spell,logic)
@@ -994,7 +1177,7 @@ spellbooks.spells.YUANHU:callback(function(spell,logic)
         if activeenemies then
             activeenemies:each(function(enemy, index, uptime)
                 if enemy.casting then
-                    print(enemy.castingspellid)
+                    -- print(enemy.castingspellid)
                     for _, v in pairs(Aurora.interveneList) do
                         if tonumber(v) == enemy.castingspellid and enemy.casttarget then
                             -- print("援护",enemy.castingspellid,enemy.casttarget.name)
@@ -1042,6 +1225,12 @@ spellbooks.spells.DUNQIANG:callback(function(spell, logic)
         yingdui = spell
         -- return true
     end
+    -- if isDUNQIANG and yingdui == nil and spell:ready() then
+    --     if isJiaJian(spell) then
+    --         yingdui = spell
+    --         injuryResponse(spell)
+    --     end
+    -- end
 
     if healthDq > 0 then
         if player.hp <= healthDq and not player.aura(871) then
@@ -1214,10 +1403,17 @@ spellbooks.spells.CUOZHINUHOU:callback(function(spell, logic)
             return spell:cast(player)
         end
     end
-
-    if isCUOZHINUHOU  and spell:isknown() and spell:ready() and yingdui == nil then
+    if isCUOZHINUHOU and spell:ready() and yingdui == nil then
         yingdui = spell
+        -- return true
     end
+
+    -- if isCUOZHINUHOU and yingdui == nil and spell:ready() then
+    --     if isJiaJian(spell) then
+    --         yingdui = spell
+    --         injuryResponse(spell)
+    --     end
+    -- end
 
     if isCZCD and player.enemiesaround(8) >= 1 and player.speed == 0 and isCooldown() then
         return spell:cast(player)
@@ -1502,8 +1698,9 @@ spellbooks.spells.QUANJI:callback(function(spell, logic)
 end)
 
 spellbooks.spells.FASHUFANSHE:callback(function(spell, logic)
-    -- print("法术反射")
+    
     if isFSFS then
+        -- print("法术反射")
         if spell:ready() then
             local activeenemies = Aurora.activeenemies
             if activeenemies then
@@ -1511,7 +1708,9 @@ spellbooks.spells.FASHUFANSHE:callback(function(spell, logic)
                     if enemy.casting then
                         if enemy.castingremains <= 1 and  enemy.casttarget and enemy.casttarget.name and enemy.casttarget.name == player.name then
                             for k, v in pairs(Aurora.reflectionSpells) do
+                                --  print("反射",enemy.castingspellid,v)
                                 if enemy.castingspellid == tonumber(v) then
+                                --    print("反射",enemy.castingspellid,tonumber(v))
                                    return spell:cast(player)
                                 end
                             end
@@ -2014,8 +2213,7 @@ end)
 local function ShowUpdateAlert()
     local updateMessages = {
         -- "时间:10月7日 13:23",
-        "增加自动生成常用宏命令按钮",
-        "增加常用天赋按钮,点击复制字符串",
+        "重构饰品功能",
         "*** 有问题及时联系作者(秒改) ***"
     }
 
