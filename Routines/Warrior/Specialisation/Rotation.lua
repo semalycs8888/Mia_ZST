@@ -1839,17 +1839,14 @@ end, "WARRIOR", 3, "Mia_Warrior")
 
 
 
+-- 获取客户端语言，增强多语言兼容性
+local clientLocale = GetLocale()
+local isChineseClient = clientLocale == "zhCN" or clientLocale == "zhTW"
+
 Aurora.EventHandler:RegisterEvent("SPELL_CAST_SUCCESS", function(eventData)
     if eventData.source.guid == UnitGUID("player") then
         local spellId, spellName = unpack(eventData.params)
-        -- print("施法成功",spellName,castedCount)
-        -- if  spellName ~= "盾牌格挡" and spellName ~= "法术反射" and spellName ~= "防御姿态" and spellName ~= "战斗姿态" and spellName ~= "拳击" and spellName ~= "英勇飞跃" and spellName ~= "挑战怒吼" and spellName ~= "盾墙" and spellName ~= "无视苦痛" and spellName ~= "破釜沉舟" and spellName ~= "嘲讽" and spellName ~= "冲锋" then
-        --     castedCount = castedCount + 1
-        --     --应对技能计数
-        --     yingduicount = yingduicount + 1
-        --     isLT = true
-        -- end
-
+        -- 使用法术ID而非名称进行判断，确保多语言兼容性
         if spellId ~= 2565 and spellId ~= 23920 and spellId ~= 386208 and spellId ~= 386164 and spellId ~= 6552 and spellId ~= 6544 and spellId ~= 386071 and spellId ~= 871 and spellId ~= 190456 and spellId ~= 12975 and spellId ~= 355 and spellId ~= 100 then
             castedCount = castedCount + 1
             --应对技能计数
@@ -1874,10 +1871,8 @@ Aurora.EventHandler:RegisterEvent("SPELL_CAST_SUCCESS", function(eventData)
             addSpellStat = nil
             castedCount = 0
         end
-        -- print(string.format("Cast %s (ID: %d)", spellName, spellId))
+        
         if spellId == tonumber(addSpellStat) then
-            -- isLoop = true
-            -- print("相同技能")
             addSpellStat = nil
             castedCount = 0
         end
@@ -1888,9 +1883,8 @@ local autoQuanji_toggle = Aurora:AddGlobalToggle({
     label = "auto Interrupt",              -- Display name (max 11 characters)
     var = "autoQuanji_toggle",       -- Unique identifier for saving state
     icon = 6552, -- Icon texture or spell ID
-    tooltip = "自动打断", -- Tooltip text
+    tooltip = getLocalizedDescription("自动打断", "Automatic Interruption"), -- Tooltip text
     onClick = function(value)    -- Optional callback when clicked
-        -- print("自动打断:", value)
         autoQuanji = value
     end
 })
@@ -1899,19 +1893,18 @@ local autoChaofeng_toggle = Aurora:AddGlobalToggle({
     label = "auto taunt",              -- Display name (max 11 characters)
     var = "autoChaofeng_toggle",       -- Unique identifier for saving state
     icon = 355, -- Icon texture or spell ID
-    tooltip = "自动嘲讽", -- Tooltip text
+    tooltip = getLocalizedDescription("自动嘲讽", "Auto Taunt"), -- Tooltip text
     onClick = function(value)    -- Optional callback when clicked
-        -- print("自动打断:", value)
         isChaofeng = value
     end
 })
+
 local autoGongqiang_toggle = Aurora:AddGlobalToggle({
     label = "battle shout",              -- Display name (max 11 characters)
     var = "autoGongqiang_toggle",       -- Unique identifier for saving state
     icon = 6673, -- Icon texture or spell ID
-    tooltip = "脱战生效,战斗中用宏插入", -- Tooltip text
+    tooltip = getLocalizedDescription("脱战生效，战斗中用宏插入", "Active out of combat, use macro in combat"), -- Tooltip text
     onClick = function(value)    -- Optional callback when clicked
-        -- print("自动切换目标:", value)
         isGongqiang = value
     end
 })
@@ -1920,52 +1913,48 @@ local autoFS_toggle = Aurora:AddGlobalToggle({
     label = "spell reflection",              -- Display name (max 11 characters)
     var = "autoFS_toggle",       -- Unique identifier for saving state
     icon = 23920, -- Icon texture or spell ID
-    tooltip = "自动法术反射", -- Tooltip text
+    tooltip = getLocalizedDescription("自动法术反射", "Auto Spell Reflection"), -- Tooltip text
     onClick = function(value)    -- Optional callback when clicked
-        -- print("自动打断:", value)
         isFSFS = value
     end
 })
-
-
 
 local autoSwitchTarget_toggle = Aurora:AddGlobalToggle({
     label = "auto switch target",              -- Display name (max 11 characters)
     var = "autoSwitchTarget_toggle",       -- Unique identifier for saving state
     icon = 76290, -- Icon texture or spell ID
-    tooltip = "lose auto-Attack,switch targets.effective range:4-8(丢失自动攻击切换目标,生效范围:4-8码)", -- Tooltip text
+    tooltip = getLocalizedDescription("丢失自动攻击切换目标，生效范围：4-8码", "Switch targets when auto-attack is lost. Effective range: 4-8 yards"), -- Tooltip text
     onClick = function(value)    -- Optional callback when clicked
-        -- print("自动切换目标:", value)
         isSwitchTarget = value
     end
 })
+
 local autoDunpaichongfeng_toggle = Aurora:AddGlobalToggle({
     label = "sheild charge",              -- Display name (max 11 characters)
     var = "autoDunpaichongfeng_toggle",       -- Unique identifier for saving state
     icon = 385952, -- Icon texture or spell ID
-    tooltip = "冲锋最近的,防止位移", -- Tooltip text
+    tooltip = getLocalizedDescription("冲锋最近的，防止位移", "Charge the nearest target to prevent displacement"), -- Tooltip text
     onClick = function(value)    -- Optional callback when clicked
-        -- print("自动切换目标:", value)
         isDunpaichongfeng = value
     end
 })
+
 local autoCZCD_toggle = Aurora:AddGlobalToggle({
     label = "demoralizing shout",              -- Display name (max 11 characters)
     var = "autoCZCD_toggle",       -- Unique identifier for saving state
     icon = 1160, -- Icon texture or spell ID
-    tooltip = "挫志怒吼卡cd(demoralizing shout on cooldown)", -- Tooltip text
+    tooltip = getLocalizedDescription("挫志怒吼卡CD", "Demoralizing Shout on Cooldown"), -- Tooltip text
     onClick = function(value)    -- Optional callback when clicked
-        -- print("自动打断:", value)
         isCZCD = value
     end
 })
+
 local autoLonghou_toggle = Aurora:AddGlobalToggle({
     label = "thunderous roar",              -- Display name (max 11 characters)
     var = "autoLonghou_toggle",       -- Unique identifier for saving state
     icon = 384318, -- Icon texture or spell ID
-    tooltip = "站住不动或者周围4目标以上", -- Tooltip text
+    tooltip = getLocalizedDescription("站住不动或者周围4目标以上", "When standing still or 4+ targets nearby"), -- Tooltip text
     onClick = function(value)    -- Optional callback when clicked
-        -- print("自动切换目标:", value)
         isLonghou = value
     end
 })
@@ -1974,19 +1963,18 @@ local autoTianshen_toggle = Aurora:AddGlobalToggle({
     label = "avenging wrath",              -- Display name (max 11 characters)
     var = "autoTianshen_toggle",       -- Unique identifier for saving state
     icon = 107574, -- Icon texture or spell ID
-    tooltip = "自动天神下凡,站住不动或者5目标以上", -- Tooltip text
+    tooltip = getLocalizedDescription("自动天神下凡，站住不动或者5目标以上", "Auto Avenging Wrath when standing still or 5+ targets nearby"), -- Tooltip text
     onClick = function(value)    -- Optional callback when clicked
-        -- print("自动切换目标:", value)
         autoTianshen = value
     end
 })
+
 local autopohuaizhe_toggle = Aurora:AddGlobalToggle({
     label = "devastator",              -- Display name (max 11 characters)
     var = "autopohuaizhe_toggle",       -- Unique identifier for saving state
     icon = 228920, -- Icon texture or spell ID
-    tooltip = "自动破坏者", -- Tooltip text
+    tooltip = getLocalizedDescription("自动破坏者", "Auto Devastator"), -- Tooltip text
     onClick = function(value)    -- Optional callback when clicked
-        -- print("自动切换目标:", value)
         autopohuaizhe = value
     end
 })
@@ -1995,9 +1983,8 @@ local autoyongshizhimao_toggle = Aurora:AddGlobalToggle({
     label = "warrior's spear",              -- Display name (max 11 characters)
     var = "autoyongshizhimao_toggle",       -- Unique identifier for saving state
     icon = 376079, -- Icon texture or spell ID
-    tooltip = "自动勇士之矛", -- Tooltip text
+    tooltip = getLocalizedDescription("自动勇士之矛", "Auto Warrior's Spear"), -- Tooltip text
     onClick = function(value)    -- Optional callback when clicked
-        -- print("自动切换目标:", value)
         autoyongshizhimao = value
     end
 })
@@ -2039,10 +2026,31 @@ if autoCZCD_toggle:GetValue() then
     isCZCD = true
 end
 
+-- 自动法术反射功能
 if autoFS_toggle:GetValue() then
-    -- print("自动法术反射：",autoFS_toggle:GetValue())
     isFSFS = true
 end
+
+-- 添加法术名称到法术ID的映射表，增强多语言兼容性
+local spellIdToName = {
+    [100] = getLocalizedDescription("冲锋", "Charge"),
+    [355] = getLocalizedDescription("嘲讽", "Taunt"),
+    [23920] = getLocalizedDescription("法术反射", "Spell Reflection"),
+    [6552] = getLocalizedDescription("拳击", "Pummel"),
+    [1160] = getLocalizedDescription("挫志怒吼", "Demoralizing Shout"),
+    [1161] = getLocalizedDescription("挑战怒吼", "Challenging Shout"),
+    [12975] = getLocalizedDescription("破釜沉舟", "Last Stand"),
+    [190456] = getLocalizedDescription("无视苦痛", "Ignore Pain"),
+    [202168] = getLocalizedDescription("胜利在望", "Victory Rush"),
+    [228920] = getLocalizedDescription("破坏者", "Devastator"),
+    [376079] = getLocalizedDescription("勇士之矛", "Warrior's Spear"),
+    [384318] = getLocalizedDescription("雷鸣之吼", "Thunderous Roar"),
+    [385952] = getLocalizedDescription("盾牌冲锋", "Shield Charge"),
+    [386071] = getLocalizedDescription("瓦解怒吼", "Intimidating Shout"),
+    [386164] = getLocalizedDescription("战斗姿态", "Battle Stance"),
+    [386208] = getLocalizedDescription("防御姿态", "Defensive Stance"),
+    [394062] = getLocalizedDescription("撕裂", "Riposte")
+}
 
 -- Later you can check the toggle state
 if autoQuanji_toggle:GetValue() then
@@ -2069,55 +2077,50 @@ Macro:RegisterCommand("IgnoringPain", function(value)
     Aurora.Config:Write("graphics.isIgnoringPain", value)
 end, "Casts the specified spell")
 
+-- 多语言宏命令描述
+local function getLocalizedDescription(zhDesc, enDesc)
+    return isChineseClient and zhDesc or enDesc
+end
+
 Macro:RegisterCommand("SwitchTarget", function()
     isSwitchTarget = not isSwitchTarget
-    -- Aurora.Config:Write("feature.isSwitchTarget", isSwitchTarget)
     autoSwitchTarget_toggle:SetValue(isSwitchTarget)
-    -- print("切换目标：",isSwitchTarget)
-end, "切换目标(Switch Target)")
+end, getLocalizedDescription("切换目标", "Switch Target"))
 
 Macro:RegisterCommand("SpellReflection", function()
     isFSFS = not isFSFS
     autoFS_toggle:SetValue(isFSFS)
-    -- print("法术反射：",isFSFS)
-end, "法术反射(Spell Reflection)")
+end, getLocalizedDescription("法术反射", "Spell Reflection"))
+
 Macro:RegisterCommand("ridicule", function()
     isChaofeng = not isChaofeng
-    -- Aurora.Config:Write("feature.isCZCD", isCZCD)
     autoChaofeng_toggle:SetValue(isChaofeng)
-    -- print("自动嘲讽：",isChaofeng)
-end, "自动嘲讽(auto taunt)")
+end, getLocalizedDescription("自动嘲讽", "auto taunt"))
 
 Macro:RegisterCommand("Shout", function()
     isCZCD = not isCZCD
-    -- Aurora.Config:Write("feature.isCZCD", isCZCD)
     autoCZCD_toggle:SetValue(isCZCD)
-    -- print("挫志怒吼卡cd：",isCZCD)
-end, "挫志怒吼卡cd(demoralizing shout on cooldown)")
+end, getLocalizedDescription("挫志怒吼卡CD", "Demoralizing Shout on CD"))
+
 Macro:RegisterCommand("AutomaticInterruption", function()
     autoQuanji = not autoQuanji
-    -- Aurora.Config:Write("feature.isCZCD", isCZCD)
     autoQuanji_toggle:SetValue(autoQuanji)
-    -- print("自动打断：",autoQuanji)
-end, "自动打断(Automatic Interruption)")
+end, getLocalizedDescription("自动打断", "Automatic Interruption"))
+
 Macro:RegisterCommand("ShieldCharge", function()
     isDunpaichongfeng = not isDunpaichongfeng
-    -- Aurora.Config:Write("feature.isDunpaichongfeng", isDunpaichongfeng)
     autoDunpaichongfeng_toggle:SetValue(isDunpaichongfeng)
-    -- print("盾牌冲锋：",isDunpaichongfeng)
-end, "盾牌冲锋(Shield Charge)")
+end, getLocalizedDescription("盾牌冲锋", "Shield Charge"))
+
 Macro:RegisterCommand("ThunderousRoar", function()
     isLonghou = not isLonghou
-    -- Aurora.Config:Write("feature.isLonghou", isLonghou)
     autoLonghou_toggle:SetValue(isLonghou)
-    -- print("雷鸣之吼：",isLonghou)
-end, "雷鸣之吼(Thunderous Roar)")
+end, getLocalizedDescription("雷鸣之吼", "Thunderous Roar"))
+
 Macro:RegisterCommand("BKB", function()
     autoTianshen = not autoTianshen
-    -- Aurora.Config:Write("feature.isLonghou", isLonghou)
     autoTianshen_toggle:SetValue(autoTianshen)
-    -- print("天神下凡：",autoTianshen)
-end, "天神下凡(avenging wrath)")
+end, getLocalizedDescription("天神下凡", "Avenging Wrath"))
 
 
 -- 修复命令解析问题：将cast命令改为使用Macro:RegisterCommand以确保正确解析参数
