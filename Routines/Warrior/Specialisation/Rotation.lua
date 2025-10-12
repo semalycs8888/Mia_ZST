@@ -19,8 +19,8 @@ end
 local Tool = Aurora.Tool or {}
 
 -- 获取客户端语言
-local clientLocale = GetLocale()
-local isChineseClient = clientLocale == "zhCN" or clientLocale == "enUS"
+local clientLocale = GetLocale() or "enUS" -- 设置默认值以防获取失败
+local isChineseClient = clientLocale == "zhCN" or clientLocale == "zhTW"
 
 -- 多语言文本获取函数
 local function getLocalizedText(zhText, enText)
@@ -308,18 +308,6 @@ local function CreateSkillMacro()
         -- 抛出错误，会在聊天框显示提示
         Aurora.alert(getLocalizedText("Mia: 角色宏列表已满，无法创建新宏！", "Mia: Role macro list is full, cannot create new macro!"))
     else
-        -- CreateMacro("集结呐喊", "INV_Misc_QuestionMark", "/"..Aurora.Macro.baseCommand.." cast 97462\n/cast 集结呐喊", nil)
-        -- CreateMacro("战斗怒吼", "INV_Misc_QuestionMark", "/"..Aurora.Macro.baseCommand.." cast 6673\n/cast 战斗怒吼", nil)
-        -- CreateMacro("雷鸣之吼", "INV_Misc_QuestionMark", "/"..Aurora.Macro.baseCommand.." cast 384318\n/cast 雷鸣之吼", nil)
-        -- CreateMacro("风暴之锤", "INV_Misc_QuestionMark", "/"..Aurora.Macro.baseCommand.." cast 107570\n/cast 风暴之锤", nil)
-        -- CreateMacro("风暴之锤", "INV_Misc_QuestionMark", "/"..Aurora.Macro.baseCommand.." cast mouseover107570\n/cast [@mouseover] 风暴之锤", nil)
-        -- CreateMacro("破坏者", "INV_Misc_QuestionMark", "/"..Aurora.Macro.baseCommand.." cast cursor228920\n/cast [@cursor] 破坏者", nil)    
-        -- CreateMacro("盾牌冲锋", "INV_Misc_QuestionMark", "/"..Aurora.Macro.baseCommand.." cast 385952\n/cast 盾牌冲锋", nil)
-        -- CreateMacro("震荡波", "INV_Misc_QuestionMark", "/"..Aurora.Macro.baseCommand.." cast 46968\n/cast 震荡波", nil)
-        -- CreateMacro("英勇投掷", "INV_Misc_QuestionMark", "/"..Aurora.Macro.baseCommand.." cast 57755\n/cast 英勇投掷", nil)
-        -- CreateMacro("英勇投掷", "INV_Misc_QuestionMark", "/"..Aurora.Macro.baseCommand.." cast mouseover57755\n/cast [@mouseover] 英勇投掷", nil)
-        -- CreateMacro("开关", "INV_Misc_QuestionMark", "/"..Aurora.Macro.baseCommand.." toggle", nil)
-        -- CreateMacro("挫志怒吼", "INV_Misc_QuestionMark", "#showtooltip 挫志怒吼\n/"..Aurora.Macro.baseCommand.." cast 1160\n/cast 挫志怒吼", nil)
         Aurora.Tool:CreateMacro(97462, "regular", false)
         Aurora.Tool:CreateMacro(6673, "regular", false)
         Aurora.Tool:CreateMacro(384318, "regular", false)

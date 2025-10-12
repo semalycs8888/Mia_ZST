@@ -14,8 +14,8 @@ UpdateAlert.messageLabel = nil
 UpdateAlert.closeButton = nil
 
 -- 获取客户端语言
-local clientLocale = GetLocale()
-local isChineseClient = clientLocale == "zhCN" or clientLocale == "enUS"
+local clientLocale = GetLocale() or "enUS" -- 设置默认值以防获取失败
+local isChineseClient = clientLocale == "zhCN" or clientLocale == "zhTW"
 
 -- 多语言文本获取函数
 local function getLocalizedText(zhText, enText)
