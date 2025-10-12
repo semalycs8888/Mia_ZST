@@ -1226,7 +1226,7 @@ spellbooks.spells.AutoAttack:callback(function(spell,logic)
     if isSwitchTarget then
         target = Aurora.UnitManager:Get("target")
         if target.exists and target.distanceto(player) <= 4.3 and target.playerfacing180 then
-            player.settarget(target)
+            return spell:cast(target)
         elseif target.exists and target.distanceto(player) > 4.3 and target.distanceto(player) <= 8 then
             Aurora.activeenemies:each(function(enemy, index, uptime)
                 if enemy.playerfacing180 and enemy.distanceto(player) <= 4.3 then
