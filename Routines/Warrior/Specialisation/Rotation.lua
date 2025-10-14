@@ -1274,6 +1274,9 @@ spellbooks.spells.POFUCHENZHOU:callback(function(spell, logic)
 end)
 
 spellbooks.spells.LEITINGYIJI:callback(function(spell, logic)
+    if isguaji then
+       return spell:cast(player)
+    end
     -- print("雷霆一击",isLT)
     if player.enemiesaround(8) >= 1 and isLT then
         return spell:cast(player)
