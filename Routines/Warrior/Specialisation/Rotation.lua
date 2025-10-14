@@ -175,6 +175,7 @@ local isdraw = true
 local onlyincombat = true
 local drawLineWidth = 2
 local farDistance = false
+local isguaji = false
 -- 将respondSpells添加到Aurora全局表，使其可以在其他文件中访问
 Aurora.respondSpells = Aurora.respondSpells or {
     1237071,--石拳
@@ -1850,6 +1851,9 @@ Aurora:RegisterRoutine(function()
             -- print("脱战")
             battleReady()
             if spells.ZHANDOUNUHOU:execute() then return true end
+            if isguaji then 
+                if spells.LEITINGYIJI:execute() then return true end
+            end
             
         end
     end
@@ -2228,6 +2232,11 @@ Macro:RegisterCommand("castmouseover107570", function()
         castedCount = 0
     end
 end)
+Macro:RegisterCommand("GJ", function()
+    isguaji = not isguaji
+end)
+
+
 
 local function ShowUpdateAlert()
     local updateMessages = {
