@@ -864,7 +864,7 @@ local isLoop = true
 
 --电缆
 local battleResurrection = Aurora.ItemHandler.NewItem(221955)
-local weaponEnhancement = Aurora.ItemHandler.NewItem(224107)
+-- local weaponEnhancement = Aurora.ItemHandler.NewItem(224107)
 local fuwen = Aurora.ItemHandler.NewItem(243191)
 -- local baofayaopostion = Aurora.ItemHandler.NewItem(212265)
 
@@ -1099,7 +1099,7 @@ end
 local function isTargetBehind(spell, distance)
     target = Aurora.UnitManager:Get("target")
     if target.exists then
-        if not target.playerfacing180 or target.distanceto(player) > distance or spell:castable(target) then
+        if not target.playerfacing180 or target.distanceto(player) > distance or not spell:castable(target) then
             Aurora.activeenemies:each(function(enemy, index, uptime)
                 if enemy.playerfacing180 and enemy.distanceto(player) <= distance and spell:castable(enemy) then
                     -- print("切目标斩杀")
@@ -1833,6 +1833,22 @@ local function healthItem()
         end
     end
 end
+-- function CheckImportantTimer()
+--     local timers = Aurora.BossMod:getactivetimers()
+--     local pullString = Aurora.BossMod:getpullstring()
+--     print(pullString)
+--     for k, v in pairs(timers) do
+--         print(k,v)
+--     end
+
+--     if Aurora.BossMod:hastimer("石拳") then
+--         local remaining = Aurora.BossMod:gettimerremaining("石拳")
+--         if remaining < 5 then
+--             -- Prepare for ability
+--             print("重要技能即将触发")
+--         end
+--     end
+-- end
 
 Aurora:RegisterRoutine(function()
     -- print("战斗外逻辑")
@@ -1844,6 +1860,7 @@ Aurora:RegisterRoutine(function()
     -- print(target.distanceto(player))
     if isLoop then
         if player.combat then
+            -- CheckImportantTimer()
             healthItem()
             isBaofayao()
             if isuseTrinket then
