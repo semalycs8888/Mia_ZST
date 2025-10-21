@@ -103,6 +103,12 @@ local spellbooks = {
         POHUAIZHE = NewSpell(228920),
         --[援护]3411
         YUANHU = NewSpell(3411),
+        BENGCUI = NewSpell(436358),
+        REMIXNIUQU = NewSpell(1237711),
+        REMIXSHENLIN = NewSpell(1233577),
+        REMIXYUANPAN = NewSpell(1233775),
+        REMIXFENGBAO = NewSpell(1233181),
+        REMIXSHENPAN = NewSpell(1251045),
     },
     auras = {
         
@@ -176,6 +182,11 @@ local onlyincombat = true
 local drawLineWidth = 2
 local farDistance = false
 local isguaji = false
+local autoRemixYuanPan = false
+local autoRemixShenPan = false
+local autoRemixFengBao = false
+local autoRemixShenLin = false
+local autoRemixNiuQu = false
 -- 将respondSpells添加到Aurora全局表，使其可以在其他文件中访问
 Aurora.respondSpells = Aurora.respondSpells or {
     1237071,--石拳
@@ -871,6 +882,7 @@ local fuwen = Aurora.ItemHandler.NewItem(243191)
 local isLT = true
 local autopohuaizhe = false
 local autoyongshizhimao = false
+local autoBenGCui = false
 
 
 
@@ -1180,12 +1192,50 @@ local function isJiaJian(spell)
     -- end
     return true
 end
+spellbooks.spells.REMIXFENGBAO:callback(function(spell,logic)
+    if autoRemixFengBao then
+        return Tool:Remix(spell)
+    end
+    return false
+end)
+spellbooks.spells.REMIXNIUQU:callback(function(spell,logic)
+    if autoRemixNiuQu then
+        return Tool:Remix(spell)
+    end
+    return false        
+end)
+spellbooks.spells.REMIXSHENLIN:callback(function(spell,logic)
+    if autoRemixShenLin then
+        return Tool:Remix(spell)
+    end
+    return false        
+end)
+spellbooks.spells.REMIXSHENPAN:callback(function(spell,logic)
+    if autoRemixShenPan then
+        return Tool:Remix(spell)
+    end
+    return false        
+end)
+spellbooks.spells.REMIXYUANPAN:callback(function(spell,logic)
+    if autoRemixYuanPan then
+        return Tool:Remix(spell)
+    end 
+    return false        
+end)
+
+
 
 spellbooks.spells.TIANSHENXIAFAN:callback(function(spell,logic)
     if autoTianshen and isCooldown() then
         if player.enemiesaround(8) >= 5 or player.speed == 0 then
             return spell:cast(player)
         end
+    end
+end)
+spellbooks.spells.BENGCUI:callback(function(spell,logic)
+    if autoBenGCui then
+        target = Aurora.UnitManager:Get("target")
+        return spell:cast(target)
     end
 end)
 
@@ -1768,12 +1818,19 @@ local function loop()
   if spells.PODANNUHOU:execute() then return true end
   if spells.TIANSHENXIAFAN:execute() then return true end
   if spells.CUOZHINUHOU:execute() then return true end
+  if spells.BENGCUI:execute() then return true end
   if spells.DUNQIANG:execute() then return true end
   if spells.POFUCHENZHOU:execute() then return true end
   if spells.YONGSHIZHIMAO:execute() then return true end
   if spells.DUNPAICHONGFENG:execute() then return true end
   if spells.POHUAIZHE:execute() then return true end
   if spells.YONGSHIZHIMAO:execute() then return true end
+
+  if spells.REMIXFENGBAO:execute() then return true end
+  if spells.REMIXNIUQU:execute() then return true end
+  if spells.REMIXSHENLIN:execute() then return true end
+  if spells.REMIXSHENPAN:execute() then return true end
+  if spells.REMIXYUANPAN:execute() then return true end
   
   if spells.JIJIENAHAN:execute() then return true end
   if spells.ZHENDANGBO:execute() then return true end
@@ -2044,7 +2101,96 @@ local autoyongshizhimao_toggle = Aurora:AddGlobalToggle({
         autoyongshizhimao = value
     end
 })
-
+if spellbooks.spells.BENGCUI:isknown() then
+    local autoBenGCui_toggle = Aurora:AddGlobalToggle({
+        label = getLocalizedText("崩催", "devastator"),              -- Display name (max 11 characters)
+        var = "autoBenGCui_toggle",       -- Unique identifier for saving state
+        icon = 436358, -- Icon texture or spell ID
+        tooltip = getLocalizedText("崩催", "devastator"), -- Tooltip text
+        onClick = function(value)    -- Optional callback when clicked
+            -- print("自动切换目标:", value)
+            autoBenGCui = value
+        end
+    })
+    if autoBenGCui_toggle:GetValue() then
+        autoBenGCui = true
+    end
+end
+if spellbooks.spells.REMIXFENGBAO:isknown() then
+    local autoRemixFengBao_toggle = Aurora:AddGlobalToggle({
+        label = getLocalizedText("remix", "remix"),              -- Display name (max 11 characters)
+        var = "autoRemixFengBao_toggle",       -- Unique identifier for saving state
+        icon = spellbooks.spells.REMIXFENGBAO.id, -- Icon texture or spell ID
+        tooltip = getLocalizedText("remix", "remix"), -- Tooltip text
+        onClick = function(value)    -- Optional callback when clicked
+            -- print("自动切换目标:", value)
+            autoRemixFengBao = value
+        end
+    })
+    if autoRemixFengBao_toggle:GetValue() then
+        autoRemixFengBao = true
+    end
+end
+if spellbooks.spells.REMIXNIUQU:isknown() then
+    local autoRemixNiuQu_toggle = Aurora:AddGlobalToggle({
+        label = getLocalizedText("remix", "remix"),              -- Display name (max 11 characters)
+        var = "autoRemixNiuQu_toggle",       -- Unique identifier for saving state
+        icon = spellbooks.spells.REMIXNIUQU.id, -- Icon texture or spell ID
+        tooltip = getLocalizedText("remix", "remix"), -- Tooltip text
+        onClick = function(value)    -- Optional callback when clicked
+            -- print("自动切换目标:", value)
+            autoRemixNiuQu = value
+        end
+    })
+    if autoRemixNiuQu_toggle:GetValue() then
+        autoRemixNiuQu = true
+    end
+end
+if spellbooks.spells.REMIXSHENLIN:isknown() then
+    local autoRemixShenLin_toggle = Aurora:AddGlobalToggle({
+        label = getLocalizedText("remix", "remix"),              -- Display name (max 11 characters)
+        var = "autoRemixShenLin_toggle",       -- Unique identifier for saving state
+        icon = spellbooks.spells.REMIXSHENLIN.id, -- Icon texture or spell ID
+        tooltip = getLocalizedText("remix", "remix"), -- Tooltip text
+        onClick = function(value)    -- Optional callback when clicked
+            -- print("自动切换目标:", value)
+            autoRemixShenLin = value
+        end
+    })
+    if autoRemixShenLin_toggle:GetValue() then
+        autoRemixShenLin = true
+    end
+end
+if spellbooks.spells.REMIXSHENPAN:isknown() then
+    local autoRemixShenPan_toggle = Aurora:AddGlobalToggle({
+        label = getLocalizedText("remix", "remix"),              -- Display name (max 11 characters)
+        var = "autoRemixShenPan_toggle",       -- Unique identifier for saving state
+        icon = spellbooks.spells.REMIXSHENPAN.id, -- Icon texture or spell ID
+        tooltip = getLocalizedText("remix", "remix"), -- Tooltip text
+        onClick = function(value)    -- Optional callback when clicked
+            -- print("自动切换目标:", value)
+            autoRemixShenPan = value
+        end
+    })
+    if autoRemixShenPan_toggle:GetValue() then
+        autoRemixShenPan = true
+    end
+end
+if spellbooks.spells.REMIXYUANPAN:isknown() then
+    local autoRemixYuanPan_toggle = Aurora:AddGlobalToggle({
+        label = getLocalizedText("remix", "remix"),              -- Display name (max 11 characters)
+        var = "autoRemixYuanPan_toggle",       -- Unique identifier for saving state
+        icon = spellbooks.spells.REMIXYUANPAN.id, -- Icon texture or spell ID
+        tooltip = getLocalizedText("remix", "remix"), -- Tooltip text
+        onClick = function(value)    -- Optional callback when clicked
+            -- print("自动切换目标:", value)
+            autoRemixYuanPan = value
+        end
+    })
+    if autoRemixYuanPan_toggle:GetValue() then
+        autoRemixYuanPan = true
+    end
+end
 
 if autoyongshizhimao_toggle:GetValue() then
     autoyongshizhimao = true
@@ -2261,7 +2407,8 @@ end)
 local function ShowUpdateAlert()
     local updateMessages = {
         -- "时间:10月7日 13:23",
-        "重构饰品功能",
+        "支持 巨神兵天赋",
+        "支持 Remix",
         "*** 有问题及时联系作者(秒改) ***"
     }
 

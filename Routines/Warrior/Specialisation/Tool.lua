@@ -66,3 +66,26 @@ function Tool:TTD()
     return Aurora.groupttd()
 end
 
+function Tool:Remix(spell)
+    local player = Aurora.UnitManager:Get("player")
+    local target = Aurora.UnitManager:Get("target")
+    if spell:isknown() then
+       if spell:castable(player) then
+           return spell:cast(player)
+       elseif spell:castable(target) then
+           return spell:cast(target)
+       else 
+           return spell:smartaoe(target, {
+                offsetMin = 0,       
+                offsetMax = 20,     
+                filter = function(unit, distance, position)
+                    return true
+                end,
+                ignoreEnemies = false,
+                ignoreFriends = true
+            })
+       end
+    end
+    return false
+end
+
