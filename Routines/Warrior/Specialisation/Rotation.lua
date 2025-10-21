@@ -109,6 +109,7 @@ local spellbooks = {
         REMIXYUANPAN = NewSpell(1233775),
         REMIXFENGBAO = NewSpell(1233181),
         REMIXSHENPAN = NewSpell(1251045),
+        REMIXNIUQU2 = NewSpell(1242973),
     },
     auras = {
         
@@ -1192,6 +1193,11 @@ local function isJiaJian(spell)
     -- end
     return true
 end
+
+spellbooks.spells.REMIXNIUQU2:callback(function(spell,logic)
+    return Tool:Remix(spell)
+end)
+
 spellbooks.spells.REMIXFENGBAO:callback(function(spell,logic)
     if autoRemixFengBao then
         return Tool:Remix(spell)
@@ -1831,6 +1837,7 @@ local function loop()
   if spells.REMIXSHENLIN:execute() then return true end
   if spells.REMIXSHENPAN:execute() then return true end
   if spells.REMIXYUANPAN:execute() then return true end
+  if spells.REMIXNIUQU2:execute() then return true end
   
   if spells.JIJIENAHAN:execute() then return true end
   if spells.ZHENDANGBO:execute() then return true end
