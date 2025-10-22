@@ -1837,7 +1837,7 @@ local function loop()
   if spells.REMIXSHENLIN:execute() then return true end
   if spells.REMIXSHENPAN:execute() then return true end
   if spells.REMIXYUANPAN:execute() then return true end
-  if spells.REMIXNIUQU2:execute() then return true end
+--   if spells.REMIXNIUQU2:execute() then return true end
   
   if spells.JIJIENAHAN:execute() then return true end
   if spells.ZHENDANGBO:execute() then return true end
@@ -2087,27 +2087,36 @@ local autoTianshen_toggle = Aurora:AddGlobalToggle({
         autoTianshen = value
     end
 })
-local autopohuaizhe_toggle = Aurora:AddGlobalToggle({
-    label = getLocalizedText("自动破坏者", "devastator"),              -- Display name (max 11 characters)
-    var = "autopohuaizhe_toggle",       -- Unique identifier for saving state
-    icon = 228920, -- Icon texture or spell ID
-    tooltip = getLocalizedText("自动破坏者", "devastator"), -- Tooltip text
-    onClick = function(value)    -- Optional callback when clicked
-        -- print("自动切换目标:", value)
-        autopohuaizhe = value
+if spellbooks.spells.POHUAIZHE:isknown() then
+    local autopohuaizhe_toggle = Aurora:AddGlobalToggle({
+        label = getLocalizedText("自动破坏者", "devastator"),              -- Display name (max 11 characters)
+        var = "autopohuaizhe_toggle",       -- Unique identifier for saving state
+        icon = 228920, -- Icon texture or spell ID
+        tooltip = getLocalizedText("自动破坏者", "devastator"), -- Tooltip text
+        onClick = function(value)    -- Optional callback when clicked
+            -- print("自动切换目标:", value)
+            autopohuaizhe = value
+        end
+    })
+    if autopohuaizhe_toggle:GetValue() then
+        autopohuaizhe = true
     end
-})
-
-local autoyongshizhimao_toggle = Aurora:AddGlobalToggle({
-    label = getLocalizedText("自动勇士之矛", "warrior's spear"),              -- Display name (max 11 characters)
-    var = "autoyongshizhimao_toggle",       -- Unique identifier for saving state
-    icon = 376079, -- Icon texture or spell ID
-    tooltip = getLocalizedText("自动勇士之矛", "warrior's spear"), -- Tooltip text
-    onClick = function(value)    -- Optional callback when clicked
-        -- print("自动切换目标:", value)
-        autoyongshizhimao = value
+end
+if spellbooks.spells.YONGSHIZHIMAO:isknown() then
+    local autoyongshizhimao_toggle = Aurora:AddGlobalToggle({
+        label = getLocalizedText("自动勇士之矛", "warrior's spear"),              -- Display name (max 11 characters)
+        var = "autoyongshizhimao_toggle",       -- Unique identifier for saving state
+        icon = 376079, -- Icon texture or spell ID
+        tooltip = getLocalizedText("自动勇士之矛", "warrior's spear"), -- Tooltip text
+        onClick = function(value)    -- Optional callback when clicked
+            -- print("自动切换目标:", value)
+            autoyongshizhimao = value
+        end
+    })
+    if autoyongshizhimao_toggle:GetValue() then
+        autoyongshizhimao = true
     end
-})
+end
 if spellbooks.spells.BENGCUI:isknown() then
     local autoBenGCui_toggle = Aurora:AddGlobalToggle({
         label = getLocalizedText("崩催", "devastator"),              -- Display name (max 11 characters)
@@ -2199,13 +2208,9 @@ if spellbooks.spells.REMIXYUANPAN:isknown() then
     end
 end
 
-if autoyongshizhimao_toggle:GetValue() then
-    autoyongshizhimao = true
-end
 
-if autopohuaizhe_toggle:GetValue() then
-    autopohuaizhe = true
-end
+
+
 
 if autoLonghou_toggle:GetValue() then
     isLonghou = true
