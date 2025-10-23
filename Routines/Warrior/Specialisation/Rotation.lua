@@ -1124,6 +1124,7 @@ local function isTargetBehind(spell, distance)
             return spell:cast(target)
         end
     end
+    return false
 end
 
 local function isCooldown()
@@ -1426,7 +1427,7 @@ end)
 
 spellbooks.spells.DUNPAIMENGJI:callback(function(spell, logic)
     -- print("盾牌猛击")
-    isTargetBehind(spell, 5)
+    return isTargetBehind(spell, 5)
 end)
 
 
@@ -1435,7 +1436,7 @@ spellbooks.spells.SHENGLIZAIWANG:callback(function(spell, logic)
     -- print("胜利在望")
     if player.hp < 75 then
         -- print("胜利在望")
-        isTargetBehind(spell, 5)
+        return isTargetBehind(spell, 5)
     end
     
 end)
@@ -1469,7 +1470,7 @@ spellbooks.spells.DUNPAICHONGFENG:callback(function(spell, logic)
             return spell:cast(target)
         end
     elseif isDunpaichongfeng and spell:ready() and spell:isknown() then
-        isTargetBehind(spell, 3)
+        return isTargetBehind(spell, 3)
     end
     -- isTargetBehind(spell, 5)
 end)
@@ -1504,7 +1505,7 @@ spellbooks.spells.ZHANSHA2:callback(function(spell, logic)
         -- print("斩杀2")
         if spellbooks.talents.CUISI:isknown() then
         if player.aura(52437) then
-            isTargetBehind(spell, 5)
+            return isTargetBehind(spell, 5)
         end
     end
 end)
@@ -1512,7 +1513,7 @@ end)
 spellbooks.spells.ZHANSHA:callback(function(spell, logic)
     local enemyCount = player.enemiesaround(5)
     if player.rage >= 40 and enemyCount <= 3 then
-        isTargetBehind(spell, 5)
+        return isTargetBehind(spell, 5)
     end
 end)
 
