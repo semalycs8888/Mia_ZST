@@ -1,4 +1,6 @@
 -- -*- coding: utf-8 -*-
+local player = Aurora.UnitManager:Get("player")
+if player.spec == 3 then
 Mia_Warrior = Mia_Warrior or {}
 
 local NewSpell = Aurora.SpellHandler.NewSpell
@@ -2420,8 +2422,7 @@ end)
 local function ShowUpdateAlert()
     local updateMessages = {
         -- "时间:10月7日 13:23",
-        "支持 巨神兵天赋",
-        "支持 Remix",
+        "支持 防战和狂暴战双专精。切换专精后/rl重新加载。",
         "*** 有问题及时联系作者(秒改) ***"
     }
 
@@ -2446,3 +2447,1205 @@ ShowUpdateAlert()
 Aurora:RemoveGlobalToggle("rotation_interrupt")
 Aurora:RemoveGlobalToggle("rotation_cooldown")
 return Mia_Warrior
+end
+if player.spec == 2 then
+if not Aurora.Tool then
+    require "Tool"
+end
+local Tool = Aurora.Tool or {}
+if not Aurora.UpdateAlert then
+    require "UpdateAlert"
+end
+local UpdateAlert = Aurora.UpdateAlert or {}
+
+local spells = Aurora.SpellHandler.Spellbooks.warrior["2"].Mia_Warrior.spells
+local auras = Aurora.SpellHandler.Spellbooks.warrior["2"].Mia_Warrior.auras
+local talents = Aurora.SpellHandler.Spellbooks.warrior["2"].Mia_Warrior.talents
+local player = Aurora.UnitManager:Get("player")
+
+local auto_BKB = false
+local auto_lumang = false
+local auto_jianrenfengbao = false
+
+local isLoop = true
+--电缆
+local battleResurrection = Aurora.ItemHandler.NewItem(221955)
+local autoQuanji = false
+local Macro = Aurora.Macro
+local insertSpell = nil
+local addSpellSuccessCount = 0
+local isGongqiang = false
+local auto_leimingzhihou = false
+local isTrinketLoop = true
+local polietouzhi = false
+local forcesingletarget = false
+local auto_yongshizhimao = false
+local auto_pohuazhe = false
+local onCooldown = false
+
+
+local BUFFS = {
+    XUANFENGZHAN = 85739,
+    JINU = 184362,
+    CHUXINGZHIREN = 445584,
+    TIANSHENXIAFANBUFF = 107574,
+    LUMANG = 1719,
+    CUSI = 280776,
+    HUIJIN = 392537,
+    TULU = 393931,
+    CANBAO = 446918,
+    YUNMING = 445606,
+
+}
+
+--判断目标在不在面向内，如果不在选择面向内的目标施法
+local function isTargetBehind(spell, distance)
+    local target = Aurora.UnitManager:Get("target")
+    if target.exists then
+        if not target.playerfacing180 or target.distanceto(player) > distance or not spell:castable(target) then
+            Aurora.activeenemies:each(function(enemy, index, uptime)
+                if enemy.playerfacing180 and enemy.distanceto(player) <= distance and spell:castable(enemy) then
+                    -- print("切目标斩杀")
+                    return spell:cast(enemy)
+                end
+            end)
+        else
+            return spell:cast(target)
+        end
+    end
+end
+
+local function hasInterruptSpell(spellid, interruptstat)
+    if Aurora.InterfaceItem.interruptstat == "blacklist" then
+        for _, v in pairs(Aurora.interruptSpellsblacklist) do
+            if tonumber(v) == spellid then
+                return true
+            end
+        end
+        return false
+    elseif Aurora.InterfaceItem.interruptstat == "whitelist" then
+        for _, v in pairs(Aurora.interruptSpellswhitelist) do
+            if tonumber(v) == spellid then
+                return true
+            end
+        end
+        return false
+    end
+  
+end
+
+local function interruptMethod(spell,unit,spellId)
+    -- print("打断3",Aurora.InterfaceItem.interruptstat)
+    if Aurora.InterfaceItem.interruptstat == "all" then
+        return spell:cast(unit)
+    end
+    if Aurora.InterfaceItem.interruptstat == "blacklist" then
+        -- print("打断黑名单",hasInterruptSpell(spellId,"blacklist"))
+        if not hasInterruptSpell(spellId,"blacklist") then
+            return spell:cast(unit)
+        end
+    end
+    if Aurora.InterfaceItem.interruptstat == "whitelist" then
+        if hasInterruptSpell(spellId,"whitelist") then
+            return spell:cast(unit)
+        end
+    end
+end
+
+local function controlBolt(spell)
+     local activeenemies = Aurora.activeenemies
+        if activeenemies then
+            activeenemies:each(function(enemy, index, uptime)
+                if enemy.casting or enemy.channeling then
+                local enemyCastingId = 0
+                if enemy.casting then
+                    enemyCastingId = enemy.castingspellid
+                end
+                if enemy.channeling then
+                    enemyCastingId = enemy.channelingspellid
+                end
+                if enemyCastingId ~= 0 then
+                    -- print("正在施法",enemyCastingId)
+                    for _, v in pairs(Aurora.StormBoltSpellsList) do
+                        if tonumber(v) == enemyCastingId then
+                            -- print("在list中",enemyCastingId)
+                            if spell == spells.FENGBAOZHICHUI then
+                                -- print("spell",spells.FENGBAOZHICHUI)
+                                if player.distanceto(enemy) <= 20 and player.haslos(enemy) and enemy.playerfacing180 then
+                                   return spell:cast(enemy)
+                                end
+                            end
+                            if spell == spells.ZHENDANGBO then
+                                if player.distanceto(enemy) <= 8 and player.haslos(enemy) and enemy.playerfacing90 then
+                                   return spell:cast(player)
+                                end
+                            end
+
+                            if spell == spells.PODANNUHOU then
+                                if player.distanceto(enemy) <= 8 and player.haslos(enemy) and enemy.playerfacing180 then
+                                   return spell:cast(enemy)
+                                end
+                            end
+                            
+                        end
+                    end
+                end
+            end
+            end)
+        end
+
+    
+end
+local function controlZhendangbo(spell)
+     local activeenemies = Aurora.activeenemies
+        if activeenemies then
+            activeenemies:each(function(enemy, index, uptime)
+                if enemy.casting or enemy.channeling then
+                local enemyCastingId = 0
+                if enemy.casting then
+                    enemyCastingId = enemy.castingspellid
+                end
+                if enemy.channeling then
+                    enemyCastingId = enemy.channelingspellid
+                end
+                if enemyCastingId ~= 0 then
+                    -- print("正在施法",enemyCastingId)
+                    for _, v in pairs(Aurora.shockwaveSpellsList) do
+                        if tonumber(v) == enemyCastingId then
+                            if spell == spells.FENGBAOZHICHUI then
+                                if player.distanceto(enemy) <= 20 and player.haslos(enemy) and enemy.playerfacing180 then
+                                   return spell:cast(enemy)
+                                end
+                            end
+                            if spell == spells.ZHENDANGBO then
+                                if player.distanceto(enemy) <= 8 and player.haslos(enemy) and enemy.playerfacing90 then
+                                   return spell:cast(player)
+                                end
+                            end
+
+                            if spell == spells.PODANNUHOU then
+                                if player.distanceto(enemy) <= 8 and player.haslos(enemy) and enemy.playerfacing180 then
+                                   return spell:cast(enemy)
+                                end
+                            end
+                            
+                        end
+                    end
+                end
+            end
+            end)
+        end
+
+    
+end
+local function controlPodannuhou(spell)
+     local activeenemies = Aurora.activeenemies
+        if activeenemies then
+            activeenemies:each(function(enemy, index, uptime)
+                if enemy.casting or enemy.channeling then
+                local enemyCastingId = 0
+                if enemy.casting then
+                    enemyCastingId = enemy.castingspellid
+                end
+                if enemy.channeling then
+                    enemyCastingId = enemy.channelingspellid
+                end
+                if enemyCastingId ~= 0 then
+                    -- print("正在施法",enemyCastingId)
+                    for _, v in pairs(Aurora.intimidatingShoutSpellsList) do
+                        if tonumber(v) == enemyCastingId then
+                            if spell == spells.FENGBAOZHICHUI then
+                                if player.distanceto(enemy) <= 20 and player.haslos(enemy) and enemy.playerfacing180 then
+                                   return spell:cast(enemy)
+                                end
+                            end
+                            if spell == spells.ZHENDANGBO then
+                                if player.distanceto(enemy) <= 8 and player.haslos(enemy) and enemy.playerfacing90 then
+                                   return spell:cast(player)
+                                end
+                            end
+
+                            if spell == spells.PODANNUHOU then
+                                if player.distanceto(enemy) <= 8 and player.haslos(enemy) and enemy.playerfacing180 then
+                                   return spell:cast(enemy)
+                                end
+                            end
+                            
+                        end
+                    end
+                end
+            end
+            end)
+        end
+
+    
+end
+
+spells.XUEXING:callback(function (spell,logic)
+    if Aurora.InterfaceItem.autoRaceSpells and player.aura(BUFFS.TIANSHENXIAFANBUFF) then
+        return spell:cast(player)
+    end
+end)
+
+spells.XIANZUZHAOHUAN:callback(function (spell,logic)
+    if Aurora.InterfaceItem.autoRaceSpells and player.aura(BUFFS.TIANSHENXIAFANBUFF) then
+        return spell:cast(player)
+    end
+    
+end)
+
+spells.HEITIE:callback(function (spell,logic)
+    if Aurora.InterfaceItem.autoRaceSpells and player.aura(BUFFS.TIANSHENXIAFANBUFF) then
+        return spell:cast(player)
+    end
+end)
+
+spells.AutoAttack:callback(function(spell, logic)
+    local target = Aurora.UnitManager:Get("target")
+    return spell:cast(target)
+end)
+spells.SHIXUE:callback(function(spell, logic)
+    return isTargetBehind(spell, 4.5)
+end)
+spells.LUMANG:callback(function(spell, logic)
+    local target = Aurora.UnitManager:Get("target")
+    if onCooldown or auto_lumang then
+        if target.exists and target.distanceto(player) <= 8 then
+            if Tool:TTD() > Aurora.InterfaceItem.roughTTD then
+                return spell:cast(player)
+            end
+        end
+    end
+end)
+spells.TIANSHENXIAFAN:callback(function(spell, logic)
+    local target = Aurora.UnitManager:Get("target")
+    if onCooldown or auto_BKB then
+        if target.exists and target.distanceto(player) <= 8 then
+            -- print(Tool:TTD(),Aurora.InterfaceItem.bkbTTD)
+            if Tool:TTD() > Aurora.InterfaceItem.bkbTTD then
+                return spell:cast(player)
+            end
+        end
+    end
+end)
+spells.CHONGFENG:callback(function(spell, logic)
+    local target = Aurora.UnitManager:Get("target")
+    return spell:cast(target)
+end)
+
+spells.BAONU3:callback(function (spell, logic)
+    if player.rage >= 80 then
+        return isTargetBehind(spell, 4.5)
+    end
+end)
+
+spells.BAONU2:callback(function (spell, logic)
+    local tuluBuff = player.aura(BUFFS.TULU)
+    if player.rage >= 120 then
+        return isTargetBehind(spell, 4.5)
+    end
+    if tuluBuff and tuluBuff.count >= 5 then
+        return isTargetBehind(spell, 4.5)
+    end
+end)
+
+spells.POLIETOUZHI:callback(function(spell, logic)
+    if not polietouzhi then return end
+    local activeenemies = Aurora.activeenemies
+    if activeenemies then
+        activeenemies:each(function(enemy, index, uptime)
+            if enemy.isshielded and player.aura(BUFFS.JINU) and player.auraremains(BUFFS.JINU) >= 1 then
+                return spell:cast(enemy)
+            end
+        end)
+    end
+end)
+
+spells.BAONU:callback(function(spell, logic)
+
+    if not player.aura(BUFFS.JINU) then
+        return isTargetBehind(spell, 4.5)
+    end
+    if player.aura(BUFFS.JINU) and player.auraremains(BUFFS.JINU) <= 1.5 then
+        return isTargetBehind(spell, 4.5)
+    end
+
+
+
+
+    -- if spells.NUJI:charges() == 0 then
+    --     isTargetBehind(spell, 4.5)
+    -- end
+end)
+spells.NUJI:callback(function(spell, logic)
+    local caobaoBuff = player.aura(BUFFS.CANBAO)
+    if caobaoBuff then
+        return isTargetBehind(spell, 4.5)
+    end
+    return isTargetBehind(spell, 4.5)
+end)
+spells.JIANRENFENGBAO:callback(function(spell, logic)
+    if insertSpell == spell.id then
+        return spell:cast(player)
+    end
+    local target = Aurora.UnitManager:Get("target")
+    if onCooldown or auto_jianrenfengbao then
+        if target.exists and target.distanceto(player) <= 8 then
+            if Tool:TTD() > Aurora.InterfaceItem.swordSlamTTD then
+                if player.aura(BUFFS.JINU) and player.auraremains(BUFFS.JINU) >= 1 then
+                    if player.enemiesaround(8) == 1 then
+                        return spell:cast(player)
+                    elseif player.enemiesaround(8) >= 2 and spells.QIANGHUAXUANFENGZHAN:isknown() and player.aura(BUFFS.XUANFENGZHAN) and player.aura(BUFFS.XUANFENGZHAN).count >= 3 then
+                        return spell:cast(player)
+                    elseif not spells.QIANGHUAXUANFENGZHAN:isknown()  then
+                        return spell:cast(player)
+                    end
+                end
+            end
+        end
+    end
+end)
+spells.XUANFENGZHAN:callback(function(spell, logic)
+    if spells.QIANGHUAXUANFENGZHAN:isknown() then
+        if player.enemiesaround(8) >= 2 and not player.aura(BUFFS.XUANFENGZHAN) then
+            return spell:cast(player)
+        end
+    end
+end)
+spells.XUANFENGZHAN2:callback(function(spell, logic)
+    if player.enemiesaround(8) >= 2 and not player.aura(BUFFS.XUANFENGZHAN) then
+        return spell:cast(player)
+    end
+end)
+spells.YONGSHIZHIMAO:callback(function(spell, logic)
+    local target = Aurora.UnitManager:Get("target")
+    if insertSpell == "cursor"..spell.id then
+        return spell:castcursor()
+    end
+    if auto_yongshizhimao and player.aura(BUFFS.JINU) then
+        return spell:smartaoe(target, {
+        offsetMin = 0,         -- Minimum offset distance
+        offsetMax = 8,         -- Maximum offset distance
+        distanceSteps = 15,    -- Number of distance checks
+        circleSteps = 48,      -- Number of circular positions to check
+        filter = function(unit, distance, position) -- Optional filter function
+            return true -- Return true to count this unit
+        end,
+        ignoreEnemies = false, -- Ignore enemy units
+        ignoreFriends = true  -- Ignore friendly units
+        })
+    end
+end)
+-- spells.POHUAIZHE:callback(function(spell, logic)
+--     local target = Aurora.UnitManager:Get("target")
+--     if insertSpell == "cursor"..Tool:GetSpellNameByID(spell.id) then
+--         return spell:castcursor()
+--     end
+--     if auto_pohuazhe and player.aura(BUFFS.JINU) then
+--         return spell:smartaoe(target, {
+--         offsetMin = 0,         -- Minimum offset distance
+--         offsetMax = 8,         -- Maximum offset distance
+--         distanceSteps = 15,    -- Number of distance checks
+--         circleSteps = 48,      -- Number of circular positions to check
+--         filter = function(unit, distance, position) -- Optional filter function
+--             return true -- Return true to count this unit
+--         end,
+--         ignoreEnemies = false, -- Ignore enemy units
+--         ignoreFriends = true  -- Ignore friendly units
+--         })
+--     end
+-- end)
+
+spells.ZHANSHA:callback(function(spell, logic)
+
+    local target = Aurora.UnitManager:Get("target")
+    local cxzrBuff = target.aura(BUFFS.CHUXINGZHIREN)
+    local cusiBuff = player.aura(BUFFS.CUSI)
+    local huijinBuff = player.aura(BUFFS.HUIJIN)
+    local enemyCount = player.enemiesaround(8)
+    if forcesingletarget and enemyCount >= 5 then
+        enemyCount = 2
+    end
+
+    if enemyCount <= 4 then
+        if cusiBuff and cusiBuff.count >= 2 then
+            return isTargetBehind(spell, 4.5)
+        end
+        if huijinBuff and player.auraremains(BUFFS.HUIJIN) < 2 and cusiBuff then
+            return isTargetBehind(spell, 4.5)
+        end
+        if cxzrBuff and cxzrBuff.count >= 2 and cusiBuff and player.distanceto(target) <= 4.5 then
+            return spell:cast(target)
+        end
+
+        if target.exists and target.hp < 20 and spells.NUJI:charges() < 2 then
+            return isTargetBehind(spell, 4.5)
+        end
+    else
+        -- if cusiBuff  and player.aura(BUFFS.YUNMING) and player.aura(BUFFS.YUNMING).count < 3 and spells.JIANRENFENGBAO:getcd() <= 15 then
+        --     return isTargetBehind(spell, 4.5)
+        -- end
+        -- if cxzrBuff and cxzrBuff.count >= 3 and cusiBuff and player.distanceto(target) <= 4.5 then
+        --     return spell:cast(target)
+        -- end
+        if not player.aura(BUFFS.HUIJIN) and player.aura(BUFFS.CUSI) then
+            return isTargetBehind(spell, 4.5)
+        end
+        if player.aura(BUFFS.HUIJIN) and player.auraremains(BUFFS.HUIJIN) <= 5 and player.aura(BUFFS.CUSI) then
+            return isTargetBehind(spell, 4.5)
+        end
+    end
+
+    if cusiBuff and player.auraremains(BUFFS.CUSI) < 1.5 then
+        return isTargetBehind(spell, 4.5)
+    end
+
+
+
+
+end)
+spells.ZHANSHA2:callback(function(spell, logic)
+    local target = Aurora.UnitManager:Get("target")
+    local cxzrBuff = target.aura(BUFFS.CHUXINGZHIREN)
+    local cusiBuff = player.aura(BUFFS.CUSI)
+    local huijinBuff = player.aura(BUFFS.HUIJIN)
+    local enemyCount = player.enemiesaround(8)
+    if forcesingletarget and enemyCount >= 5 then
+        enemyCount = 2
+    end
+
+    if enemyCount <= 4 then
+        if cusiBuff and cusiBuff.count >= 2 then
+            return isTargetBehind(spell, 4.5)
+        end
+        if huijinBuff and player.auraremains(BUFFS.HUIJIN) < 2 and cusiBuff then
+            return isTargetBehind(spell, 4.5)
+        end
+        if cxzrBuff and cxzrBuff.count >= 2 and cusiBuff and player.distanceto(target) <= 4.5 then
+            return spell:cast(target)
+        end
+
+        if target.exists and target.hp < 20 and spells.NUJI:charges() < 2 then
+            return isTargetBehind(spell, 4.5)
+        end
+    else
+        -- if cusiBuff  and player.aura(BUFFS.YUNMING) and player.aura(BUFFS.YUNMING).count < 3 and spells.JIANRENFENGBAO:getcd() <= 15 then
+        --     return isTargetBehind(spell, 4.5)
+        -- end
+        -- if cxzrBuff and cxzrBuff.count >= 3 and cusiBuff and player.distanceto(target) <= 4.5 then
+        --     return spell:cast(target)
+        -- end
+        if not player.aura(BUFFS.HUIJIN) and player.aura(BUFFS.CUSI) then
+            return isTargetBehind(spell, 4.5)
+        end
+        if player.aura(BUFFS.HUIJIN) and player.auraremains(BUFFS.HUIJIN) <= 5 and player.aura(BUFFS.CUSI) then
+            return isTargetBehind(spell, 4.5)
+        end
+    end
+
+    if cusiBuff and player.auraremains(BUFFS.CUSI) < 1.5 then
+        return isTargetBehind(spell, 4.5)
+    end
+
+
+
+
+end)
+spells.LEIMINGZHIHOU:callback(function(spell, logic)
+    if insertSpell == spell.id then
+        return spell:cast(player)
+    end
+    if onCooldown or auto_leimingzhihou then
+        if player.aura(BUFFS.JINU) and player.enemiesaround(8) >= 1 then
+            return spell:cast(player)
+        end
+    end
+end)
+spells.AODINGZHINU:callback(function(spell, logic)
+    if insertSpell == spell.id then
+        return spell:cast(player)
+    end
+    if player.aura(BUFFS.JINU) and player.enemiesaround(8) >= 1 then
+        return spell:cast(player)
+    end
+end)
+spells.SHENGLIZAIWANG:callback(function(spell, logic)
+    if insertSpell == spell.id then
+        return isTargetBehind(spell, 4.5)
+    end
+    if Aurora.InterfaceItem.enableImpendingVictory and player.hp < Aurora.InterfaceItem.impendingVictoryThreshold then
+       return isTargetBehind(spell, 4.5)        
+    end
+end)
+spells.KUANGBAOHUIFU:callback(function(spell, logic)
+    if Aurora.InterfaceItem.enableHealthDefense and player.hp < Aurora.InterfaceItem.RagingRecoveryThreshold then
+        return spell:cast(player)
+    end
+end)
+spells.MENGJI:callback(function(spell, logic)
+    return isTargetBehind(spell, 4.5)
+end)
+spells.FASHUFANSHE:callback(function(spell, logic)
+    if Aurora.InterfaceItem.enableSpellReflection then
+        if spell:ready() then
+            local activeenemies = Aurora.activeenemies
+            if activeenemies then
+                activeenemies:each(function(enemy, index, uptime)
+                    if enemy.casting then
+                        if enemy.castingremains <= 1 and  enemy.casttarget and enemy.casttarget.name and enemy.casttarget.name == player.name then
+                            for k, v in pairs(Aurora.spellReflectionSpellsList) do
+                                if enemy.castingspellid == tonumber(v) then
+                                   return spell:cast(player)
+                                end
+                            end
+                        end
+                    end
+                end)
+            end
+        end
+    end
+end)
+
+spells.JIJIENAHAN:callback(function(spell, logic)
+    if insertSpell == spell.id then
+        return spell:cast(player)
+    end
+end)
+
+spells.FENGBAOZHICHUI:callback(function(spell, logic)
+    local target = Aurora.UnitManager:Get("target")
+    if insertSpell == spell.id then
+        return spell:cast(target)
+    end
+    if insertSpell == "mouseover"..spell.id then
+        insertSpell = spell.id
+        local mouseover = Aurora.UnitManager:Get("mouseover")
+        return spell:cast(mouseover)
+    end
+    if Aurora.InterfaceItem.enableStormBolt then
+        if spell:ready() then
+            return controlBolt(spell)
+        end
+    end
+
+end)
+
+spells.PODANNUHOU:callback(function(spell, logic)
+    local target = Aurora.UnitManager:Get("target")
+    if insertSpell == spell.id then
+        return spell:cast(target)
+    end
+    if Aurora.InterfaceItem.enableIntimidatingShout then
+        if spell:ready() then
+            return controlPodannuhou(spell)
+        end
+    end
+
+end)
+spells.ZHENDANGBO:callback(function(spell, logic)
+    if insertSpell == spell.id then
+        return spell:cast(player)
+    end
+    if Aurora.InterfaceItem.enableShockwave then
+        if spell:ready() then
+            return controlZhendangbo(spell)
+        end
+    end
+end)
+spells.ZHANDOUNUHOU:callback(function(spell, logic)
+    if insertSpell == spell.id then
+        return spell:cast(player)
+    end  --自动战斗怒吼
+    if isGongqiang then
+        local fgroup = Aurora.fgroup
+        fgroup:each(function(unit, i, uptime)
+            if not unit.aura(6673) and unit.alive and unit.distanceto(player) <= 100 then
+                return spell:cast(player) -- breaks the loop
+            end
+        end)
+        -- return spell:cast(player)
+    end
+end)
+
+
+spells.QUANJI:callback(function(spell, logic)
+    local activeenemies = Aurora.activeenemies
+    if autoQuanji and spell:ready() then
+       
+        local target = Aurora.UnitManager:Get("target")
+        local focus = Aurora.UnitManager:Get("focus")
+        if focus.exists and focus.distanceto(player) <= 4 and player.haslos(focus) and focus.enemy and focus.alive and focus.castinginterruptible and focus.playerfacing180 and focus.castingpct >= Aurora.InterfaceItem.interruptthreshold then
+            if Aurora.InterfaceItem.enableSpellReflection then
+                    if table.contains(Aurora.spellReflectionSpellsList,focus.castingspellid) then
+                        if focus.casttarget and focus.casttarget.name ~= player.name then
+                            interruptMethod(spell,focus,focus.castingspellid)
+                        end
+                        if not spells.FASHUFANSHE:ready() and not player.aura(23920) then
+                            return interruptMethod(spell,focus,focus.castingspellid)
+                        end
+                    else
+                        return interruptMethod(spell,focus,focus.castingspellid)
+                    end
+            else
+                return interruptMethod(spell,focus,focus.castingspellid)
+            end
+            
+        end
+        if focus.exists and focus.distanceto(player) <= 4 and player.haslos(focus) and focus.enemy and focus.alive and focus.channelinginterruptible and focus.playerfacing180 and focus.channelingpct >= 10 then
+            return interruptMethod(spell,focus,focus.channelingspellid)
+        end
+
+        
+        if activeenemies and not focus.exists then
+        activeenemies:each(function(enemy, index, uptime)
+            -- print("进战斗的怪",enemy.name)
+            if enemy.castinginterruptible and enemy.exists and enemy.distanceto(player) <= 4 and player.haslos(enemy) and enemy.enemy and enemy.alive and enemy.playerfacing180 and enemy.castingpct >= Aurora.InterfaceItem.interruptthreshold and enemy.castingspellid ~= 432031 then
+                if Aurora.InterfaceItem.enableSpellReflection then
+                    if table.contains(Aurora.spellReflectionSpellsList,enemy.castingspellid) then
+                        if enemy.casttarget and enemy.casttarget.name ~= player.name then
+                            return interruptMethod(spell,enemy,enemy.castingspellid)
+                        end
+                        if not spells.FASHUFANSHE:ready() and not player.aura(23920) then
+                            return interruptMethod(spell,enemy,enemy.castingspellid)
+                        end
+                    else
+                        return interruptMethod(spell,enemy,enemy.castingspellid)
+                    end
+
+                else
+                    return interruptMethod(spell,enemy,enemy.castingspellid)
+                end
+            end
+            if enemy.channelinginterruptible and enemy.exists and enemy.distanceto(player) <= 4 and player.haslos(enemy) and enemy.enemy and enemy.alive and enemy.playerfacing180 and enemy.channelingpct >= 10 and enemy.channelingspellid ~= 432031 then
+                return interruptMethod(spell,enemy,enemy.channelingspellid)
+            end
+            end)    
+        end
+    end
+end)
+
+
+
+
+--鼠标指向战复（道具）
+local function resurrectionInBattle()
+    local mouseover = Aurora.UnitManager:Get("mouseover")
+    if mouseover.exists and mouseover.friend and mouseover.dead and player.distanceto(mouseover) <= 3 and battleResurrection:isknown() and battleResurrection:ready() and Aurora.InterfaceItem.mouseoverCR then
+        isLoop = false
+        battleResurrection:use(mouseover,function ()
+            isLoop = true
+        end)
+    else
+        isLoop = true
+    end
+end
+-- 爆裂药水
+local function useBurtstPotion()
+    local explosivePotionBindingBKB = Aurora.InterfaceItem.explosivePotionBindingBKB
+    if not explosivePotionBindingBKB then return end
+    local burstPotionList = {
+        baofayao1 = Aurora.ItemHandler.NewItem(212265),
+        baofayao2 = Aurora.ItemHandler.NewItem(212264),
+        baofayao3 = Aurora.ItemHandler.NewItem(212263)
+    }
+    for k,v in pairs(burstPotionList) do
+        if v:isknown() and v:ready() and v:usable(player) and player.aura(BUFFS.TIANSHENXIAFANBUFF) and player.auraremains(BUFFS.TIANSHENXIAFANBUFF) >= 8 then
+            return v:use(player)
+        end
+    end
+end
+-- 恢复药水
+local function useRecoveryPotion()
+    local recoveryPotionThreshold = Aurora.InterfaceItem.recoveryPotionThreshold
+    local healthItemList = {
+        healthPotion1 = Aurora.ItemHandler.NewItem(244839),
+        healthPotion2 = Aurora.ItemHandler.NewItem(244838),
+        healthPotion3 = Aurora.ItemHandler.NewItem(244835),
+        zhiliaoshi = Aurora.ItemHandler.NewItem(5512)
+    }
+    for k,v in pairs(healthItemList) do
+        if v:isknown() and v:ready() and v:usable(player) and player.hp < recoveryPotionThreshold then
+            return v:use(player)
+        end
+    end
+end
+
+local function useTrinket()
+    local trinket1ID = GetInventoryItemID("player",13)
+    local trinket2ID = GetInventoryItemID("player",14)
+    local trinket1 = Aurora.ItemHandler.NewItem(trinket1ID)
+    local trinket2 = Aurora.ItemHandler.NewItem(trinket2ID)
+    local target = Aurora.UnitManager:Get("target")
+    if Aurora.InterfaceItem.trinket1Enabled then
+        if trinket1:ready() then
+            if Aurora.InterfaceItem.trinket1Binding == "bkb" then
+                if player.aura(BUFFS.TIANSHENXIAFANBUFF) then
+                    if trinket1:usable(player) and trinket1:cooldown() == 0 then
+                        if trinket1.id ~= 246344 then
+                            return trinket1:use(player)
+                        else
+                            isTrinketLoop = false
+                            return trinket1:use(player)
+                        end
+                    elseif trinket1:usable(target) and trinket1:ready() then
+                        return trinket1:use(target)
+                    end
+                end
+            elseif Aurora.InterfaceItem.trinket1Binding == "rough" then
+                if player.aura(BUFFS.LUMANG) then
+                    if trinket1:usable(player) and trinket1:cooldown() then
+                        if trinket1.id ~= 246344 then
+                            return trinket1:use(player)
+                        else
+                            isTrinketLoop = false
+                            return trinket1:use(player)
+                        end
+                    elseif trinket1:usable(target) and trinket1:ready() then
+                        return trinket1:use(target)
+                    end
+                end
+            end
+        end
+    end
+    if Aurora.InterfaceItem.trinket2Enabled then
+        if trinket2:ready() then
+            if Aurora.InterfaceItem.trinket2Binding == "bkb" then
+                if player.aura(BUFFS.TIANSHENXIAFANBUFF) then
+                    if trinket2:usable(player) and trinket2:cooldown() then
+                        if trinket2.id ~= 246344 then
+                            return trinket2:use(player)
+                        else
+                            isTrinketLoop = false
+                            return trinket2:use(player)
+                        end
+                    elseif trinket2:usable(target) and trinket2:ready() then
+                        return trinket2:use(target)
+                    end
+                end
+            elseif Aurora.InterfaceItem.trinket2Binding == "rough" then
+                if player.aura(BUFFS.LUMANG) then
+                    if trinket2:usable(player) and trinket2:cooldown() then
+                        if trinket2.id ~= 246344 then
+                            return trinket2:use(player)
+                        else
+                            isTrinketLoop = false
+                            return trinket2:use(player)
+                        end
+                    elseif trinket2:usable(target) and trinket2:ready() then
+                        return trinket2:use(target)
+                    end
+                end
+            end
+        end
+    end
+end
+
+
+local function loop()
+
+    if spells.SHENGLIZAIWANG:execute() then return true end
+    if spells.FASHUFANSHE:execute() then return true end
+    if spells.QUANJI:execute() then return true end
+    if spells.JIJIENAHAN:execute() then return true end
+    if spells.POLIETOUZHI:execute() then return true end
+    if spells.KUANGBAOHUIFU:execute() then return true end
+    if spells.PODANNUHOU:execute() then return true end
+    if spells.ZHENDANGBO:execute() then return true end
+    if spells.FENGBAOZHICHUI:execute() then return true end
+    if spells.ZHANDOUNUHOU:execute() then return true end
+
+    if spells.XUEXING:execute() then return true end
+    if spells.XIANZUZHAOHUAN:execute() then return true end
+    if spells.HEITIE:execute() then return true end
+
+    if spells.LUMANG:execute() then return true end
+    -- if spells.CHONGFENG:execute() then return true end
+
+
+    if spells.XUANFENGZHAN:execute() then return true end
+    if spells.TIANSHENXIAFAN:execute() then return true end
+
+
+    if spells.LEIMINGZHIHOU:execute() then return true end
+    -- if spells.POHUAIZHE:execute() then return true end
+    if spells.YONGSHIZHIMAO:execute() then return true end
+    if spells.AODINGZHINU:execute() then return true end
+
+
+
+    if spells.BAONU:execute() then return true end
+
+    if spells.JIANRENFENGBAO:execute() then return true end
+    if spells.ZHANSHA:execute() then return true end
+    if spells.ZHANSHA2:execute() then return true end
+    if spells.BAONU2:execute() then return true end
+    if spells.NUJI:execute() then return true end
+    if spells.BAONU3:execute() then return true end
+    if spells.SHIXUE:execute() then return true end
+    if spells.AutoAttack:execute() then return true end
+    -- if spells.MENGJI:execute() then return true end
+    return false
+end
+
+local function Ooc()
+        -- PickupInventoryItem(16)
+        -- UseItemByName("阿加法力之油")
+
+     if spells.ZHANDOUNUHOU:execute() then return true end
+end
+
+Aurora:RegisterRoutine(function()
+    -- Skip if player is dead or eating/drinking
+    if player.dead or player.iseating or player.isdrinking or player.issummoning or player.casting or player.mounted then return end
+    if player.aura(1241806) then isTrinketLoop = true end
+    -- 战复
+    resurrectionInBattle()
+
+    -- Run appropriate function based on combat state
+    if player.combat then
+        if isLoop then
+            useBurtstPotion()
+            useRecoveryPotion()
+            useTrinket()
+            -- if isTrinketLoop then
+                loop()
+            -- end
+        end
+    else
+        Ooc()
+    end
+end, "WARRIOR", 2, "Mia_Warrior")
+
+
+local auto_cooldown_toggle
+
+auto_cooldown_toggle = Aurora:AddGlobalToggle({
+    label = Tool:getLocalizedText("爆发全开", "cooldown"),              -- Display name (max 11 characters)
+    var = "auto_cooldown_toggle",       -- Unique identifier for saving state
+    icon = 118038, -- Icon texture or spell ID
+    tooltip = Tool:getLocalizedText("冷却", "cooldown"), -- Tooltip text
+    onClick = function(value)    -- Optional callback when clicked
+        onCooldown = value
+    end
+})
+
+local auto_BKB_toggle = Aurora:AddGlobalToggle({
+    label = Tool:getLocalizedText("天神下凡", "BKB"),              -- Display name (max 11 characters)
+    var = "auto_BKB_toggle",       -- Unique identifier for saving state
+    icon = 107574, -- Icon texture or spell ID
+    tooltip = Tool:getLocalizedText("天神下凡", "BKB"), -- Tooltip text
+    onClick = function(value)    -- Optional callback when clicked
+        auto_BKB = value
+    end
+})
+
+local auto_lumang_toggle = Aurora:AddGlobalToggle({
+    label = Tool:getLocalizedText("鲁莽", "rough"),              -- Display name (max 11 characters)
+    var = "auto_lumang_toggle",       -- Unique identifier for saving state
+    icon = 1719, -- Icon texture or spell ID
+    tooltip = Tool:getLocalizedText("鲁莽", "rough"), -- Tooltip text
+    onClick = function(value)    -- Optional callback when clicked
+        auto_lumang = value
+    end
+})
+local auto_jianrenfengbao_toggle = Aurora:AddGlobalToggle({
+    label = Tool:getLocalizedText("剑刃风暴", "JianRenFengBao"),              -- Display name (max 11 characters)
+    var = "auto_jianrenfengbao_toggle",       -- Unique identifier for saving state
+    icon = 446035, -- Icon texture or spell ID
+    tooltip = Tool:getLocalizedText("剑刃风暴", "JianRenFengBao"), -- Tooltip text
+    onClick = function(value)    -- Optional callback when clicked
+        auto_jianrenfengbao = value
+    end
+})
+local auto_leimingzhihou_toggle = Aurora:AddGlobalToggle({
+    label = Tool:getLocalizedText("雷鸣之吼", "thunderrous roar"),              -- Display name (max 11 characters)
+    var = "auto_leimingzhihou_toggle",       -- Unique identifier for saving state
+    icon = 384318, -- Icon texture or spell ID
+    tooltip = Tool:getLocalizedText("雷鸣之吼", "thunderrous roar"), -- Tooltip text
+    onClick = function(value)    -- Optional callback when clicked
+        auto_leimingzhihou = value
+    end
+})
+local auto_interrupt_toggle = Aurora:AddGlobalToggle({
+    label = Tool:getLocalizedText("打断", "Interrupt"),              -- Display name (max 11 characters)
+    var = "auto_interrupt_toggle",       -- Unique identifier for saving state
+    icon = 6552, -- Icon texture or spell ID
+    tooltip = Tool:getLocalizedText("打断", "Interrupt"), -- Tooltip text
+    onClick = function(value)    -- Optional callback when clicked
+        autoQuanji = value
+    end
+})
+local auto_zhandounuhou_toggle = Aurora:AddGlobalToggle({
+    label = Tool:getLocalizedText("战斗怒吼", "shout"),              -- Display name (max 11 characters)
+    var = "auto_zhandounuhou_toggle",       -- Unique identifier for saving state
+    icon = 6673, -- Icon texture or spell ID
+    tooltip = Tool:getLocalizedText("战斗怒吼", "shout"), -- Tooltip text
+    onClick = function(value)    -- Optional callback when clicked
+        isGongqiang = value
+    end
+})
+
+local auto_polietouzhi_toggle = Aurora:AddGlobalToggle({
+    label = Tool:getLocalizedText("破裂投掷破盾", "break the shield"),              -- Display name (max 11 characters)
+    var = "auto_polietouzhi_toggle",       -- Unique identifier for saving state
+    icon = 384110, -- Icon texture or spell ID
+    tooltip = Tool:getLocalizedText("破裂投掷破盾", "break the shield"), -- Tooltip text
+    onClick = function(value)    -- Optional callback when clicked
+        polietouzhi = value
+    end
+})
+local auto_qiangzhidanti_toggle = Aurora:AddGlobalToggle({
+    label = Tool:getLocalizedText("强制单体", "force single target"),              -- Display name (max 11 characters)
+    var = "qiangzhidanti_toggle",       -- Unique identifier for saving state
+    icon = 394062, -- Icon texture or spell ID
+    tooltip = Tool:getLocalizedText("强制单体", "force single target"), -- Tooltip text
+    onClick = function(value)    -- Optional callback when clicked
+        forcesingletarget = value
+    end
+})
+
+-- local auto_pohuazhe_toggle = Aurora:AddGlobalToggle({
+--     label = Tool:getLocalizedText("破坏者", "devastator"),              -- Display name (max 11 characters)
+--     var = "auto_pohuazhe_toggle",       -- Unique identifier for saving state
+--     icon = 228920, -- Icon texture or spell ID
+--     tooltip = Tool:getLocalizedText(" 破坏者", "Devastator"), -- Tooltip text
+--     onClick = function(value)    -- Optional callback when clicked
+--         auto_pohuazhe = value
+--     end
+-- })
+
+local auto_yongshizhimao_toggle = Aurora:AddGlobalToggle({
+    label = Tool:getLocalizedText("勇士之矛", "Warrior's Spear"),              -- Display name (max 11 characters)
+    var = "auto_yongshizhimao_toggle",       -- Unique identifier for saving state
+    icon = 376079, -- Icon texture or spell ID
+    tooltip = Tool:getLocalizedText("勇士之矛", "Warrior's Spear"), -- Tooltip text
+    onClick = function(value)    -- Optional callback when clicked
+        auto_yongshizhimao = value
+    end
+})
+if auto_yongshizhimao_toggle:GetValue() then
+    auto_yongshizhimao = true
+end
+
+-- if auto_pohuazhe_toggle:GetValue() then
+--     auto_pohuazhe = true
+-- end
+
+if auto_qiangzhidanti_toggle:GetValue() then
+    forcesingletarget = true
+end
+
+if auto_polietouzhi_toggle:GetValue() then
+    polietouzhi = true
+end
+
+if auto_zhandounuhou_toggle:GetValue() then
+    isGongqiang = true
+end
+
+if auto_interrupt_toggle:GetValue() then
+    autoQuanji = true
+end
+
+if auto_jianrenfengbao_toggle:GetValue() then
+    auto_jianrenfengbao = true
+end
+
+if auto_BKB_toggle:GetValue() then
+    auto_BKB = true
+end
+if auto_lumang_toggle:GetValue() then
+    auto_lumang = true
+end
+
+if auto_leimingzhihou_toggle:GetValue() then
+    auto_leimingzhihou = true
+end
+
+-- Creates /aurora greet [name]
+Macro:RegisterCommand("interrupt", function()
+    autoQuanji = not autoQuanji
+    auto_interrupt_toggle:SetValue(autoQuanji)
+end, "Greets a player")
+
+-- Creates /aurora greet [name]
+Macro:RegisterCommand("bladestorm", function(name)
+    auto_jianrenfengbao = not auto_jianrenfengbao
+    auto_jianrenfengbao_toggle:SetValue(auto_jianrenfengbao)
+end, "Greets a player")
+
+Macro:RegisterCommand("bkb", function(name)
+    auto_BKB = not auto_BKB
+    auto_BKB_toggle:SetValue(auto_BKB)
+end, "Greets a player")
+
+Macro:RegisterCommand("recklessness", function(name)
+    auto_lumang = not auto_lumang
+    auto_lumang_toggle:SetValue(auto_lumang)
+end, "Greets a player")
+
+Macro:RegisterCommand("thunderrousroar", function(name)
+    auto_leimingzhihou = not auto_leimingzhihou
+    auto_leimingzhihou_toggle:SetValue(auto_leimingzhihou)
+end, "Greets a player")
+Macro:RegisterCommand("shout", function(name)
+    isGongqiang = not isGongqiang
+    auto_zhandounuhou_toggle:SetValue(isGongqiang)
+end, "Greets a player")
+Macro:RegisterCommand("breaktheshield", function(name)
+    polietouzhi = not polietouzhi
+    auto_polietouzhi_toggle:SetValue(polietouzhi)
+end, "Greets a player")
+Macro:RegisterCommand("forcesingletarget", function(name)
+    forcesingletarget = not forcesingletarget
+    auto_qiangzhidanti_toggle:SetValue(forcesingletarget)
+end, "Greets a player")
+Macro:RegisterCommand("warriorspear", function(name)
+    auto_yongshizhimao = not auto_yongshizhimao
+    auto_yongshizhimao_toggle:SetValue(auto_yongshizhimao)
+end, "Greets a player")
+Macro:RegisterCommand("cooldown", function(name)
+    onCooldown = not onCooldown
+    auto_cooldown_toggle:SetValue(onCooldown)
+end, "Greets a player")
+
+
+-- Register a simple command
+Macro:RegisterCommand("cast", function(name)
+    if name then
+        insertSpell = Tool:GetSpellIDByName(name)
+        addSpellSuccessCount = 0
+    end
+    if not player.combat then
+        local spell = Aurora.SpellHandler.NewSpell(insertSpell)
+        local target = Aurora.UnitManager:Get("target")
+        if spell and spell:castable(player) then
+            spell:cast(player)
+        elseif spell and spell:castable(target) then
+            spell:cast(target)
+        end  
+    end
+end, "Greets a player")
+
+Macro:RegisterCommand("castmouseover", function(name)
+    local ccname
+    if name then
+        ccname = Tool:GetSpellIDByName(name)
+        addSpellSuccessCount = 0
+    end
+    if not player.combat then
+        local spell = Aurora.SpellHandler.NewSpell(ccname)
+        local mouseover = Aurora.UnitManager:Get("mouseover")
+        if spell and mouseover.exists and spell:castable(mouseover) then
+            spell:cast(mouseover)
+        end  
+    else
+        insertSpell = "mouseover"..ccname
+        -- print(insertSpell)
+    end
+end, "insert spell")
+
+Macro:RegisterCommand("castcursor", function(name)
+    local ccname
+    if name then
+        ccname = Tool:GetSpellIDByName(name)
+        addSpellSuccessCount = 0
+    end
+    if not player.combat then
+        local spell = Aurora.SpellHandler.NewSpell(ccname)
+        if spell then
+            spell:castcursor()
+        end
+    else
+        insertSpell = "cursor"..ccname
+    end
+end, "Greets a player")
+
+Aurora.EventHandler:RegisterEvent("SPELL_CAST_SUCCESS", function(eventData)
+    if eventData.source.guid == UnitGUID("player") then
+        local spellId, spellName = unpack(eventData.params)
+        if spellId == insertSpell then
+            insertSpell = nil
+            addSpellSuccessCount = 0
+        else
+            addSpellSuccessCount = addSpellSuccessCount + 1
+            if addSpellSuccessCount >= 3 then
+                addSpellSuccessCount = 0
+                insertSpell = nil
+            end
+        end
+        if Aurora.InterfaceItem.enableLucky then
+            if spellId == spells.JIANRENFENGBAO.id then
+                auto_jianrenfengbao = false
+                auto_jianrenfengbao_toggle:SetValue(false)
+            end
+            if spellId == spells.LEIMINGZHIHOU.id then
+                auto_leimingzhihou = false
+                auto_leimingzhihou_toggle:SetValue(false)
+            end
+            if spellId == spells.LUMANG.id then
+                auto_lumang = false
+                auto_lumang_toggle:SetValue(false)
+            end
+            if spellId == spells.TIANSHENXIAFAN.id then
+                auto_BKB = false
+                auto_BKB_toggle:SetValue(false)
+            end
+        end
+    
+
+    end
+end)
+
+
+local function draw()
+    local Draw = Aurora.Draw
+    Draw:RegisterCallback("myDrawing", function(canvas, unit)
+        canvas:SetWidth(Aurora.InterfaceItem.drawLineWidth)
+        if not Aurora.InterfaceItem.isdraw then return end
+        if Aurora.InterfaceItem.onlyincombat and not player.combat then return end
+        local target = Aurora.UnitManager:Get("target")
+        if unit.name == player.name and target.exists then
+            local r, g, b, a 
+            if player.distanceto(target) <= 4.4 and target.playerfacing180 then
+                 r, g, b, a = Draw:GetColor("Green", 150)
+            else
+                r, g, b, a = Draw:GetColor("Red", 150)
+            end
+            canvas:SetColor(r, g, b, a)
+            if Aurora.InterfaceItem.drawFace then
+                canvas:Arc(unit.position.x, unit.position.y, unit.position.z,5.4,180,player.rotation)
+            end
+            if Aurora.InterfaceItem.drawConnection then
+                canvas:LineRaw(unit.position.x, unit.position.y, unit.position.z,target.position.x, target.position.y, target.position.z)
+            end
+        end
+    end, "units")
+end
+
+local function ShowUpdateAlert()
+    local updateMessages = {
+        -- "时间:10月7日 13:23",
+        "支持 防战和狂暴战双专精。切换专精后/rl重新加载。",
+        "*** 有问题及时联系作者(秒改) ***"
+    }
+
+    local updateTips = Aurora.Config:Read('UpdateTipsFury')
+    if updateTips then
+        local dataString = table.concat(updateMessages, ";")
+        if updateTips ~= dataString then
+            UpdateAlert:ShowWindow(updateMessages)
+            Aurora.Config:Write('UpdateTipsFury', dataString)
+        end
+    else
+        UpdateAlert:ShowWindow(updateMessages)
+        Aurora.Config:Write('UpdateTipsFury', table.concat(updateMessages, ";"))
+    end
+end
+ShowUpdateAlert()
+
+draw()
+Aurora:RemoveGlobalToggle("rotation_interrupt")
+Aurora:RemoveGlobalToggle("rotation_cooldown")
+ 
+end
