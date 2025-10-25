@@ -1497,7 +1497,7 @@ spellbooks.spells.CUOZHINUHOU:callback(function(spell, logic)
     --     end
     -- end
 
-    if isCZCD and player.enemiesaround(8) >= 1 and player.speed == 0 and isCooldown() then
+    if isCZCD and player.enemiesaround(8) >= 1 and player.speed == 0 and isCooldown() and not player.aura(871) then
         return spell:cast(player)
     end
 
@@ -2421,8 +2421,8 @@ end)
 
 local function ShowUpdateAlert()
     local updateMessages = {
-        -- "时间:10月7日 13:23",
         "支持 防战和狂暴战双专精。切换专精后/rl重新加载。",
+        "开启自动使用挫志怒吼后，盾墙期间不会使用挫志怒吼。",
         "*** 有问题及时联系作者(秒改) ***"
     }
 
