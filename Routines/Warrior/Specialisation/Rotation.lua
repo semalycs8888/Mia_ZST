@@ -3317,9 +3317,7 @@ Aurora:RegisterRoutine(function()
 end, "WARRIOR", 2, "Mia_Warrior")
 
 
-local auto_cooldown_toggle
-
-auto_cooldown_toggle = Aurora:AddGlobalToggle({
+local auto_cooldown_toggle = Aurora:AddGlobalToggle({
     label = Tool:getLocalizedText("爆发全开", "cooldown"),              -- Display name (max 11 characters)
     var = "auto_cooldown_toggle",       -- Unique identifier for saving state
     icon = 118038, -- Icon texture or spell ID
@@ -3427,9 +3425,9 @@ if auto_yongshizhimao_toggle:GetValue() then
     auto_yongshizhimao = true
 end
 
--- if auto_pohuazhe_toggle:GetValue() then
---     auto_pohuazhe = true
--- end
+if auto_cooldown_toggle:GetValue() then
+    onCooldown = true
+end
 
 if auto_qiangzhidanti_toggle:GetValue() then
     forcesingletarget = true
