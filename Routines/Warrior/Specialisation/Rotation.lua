@@ -2032,9 +2032,20 @@ end
 --     end
 -- end
 
+local function autoFriendNpc()
+    local friends = Aurora.friends:within(5)
+    for k, unit in pairs(friends) do
+        if unit.exists and unit.friend and unit.id == 186159  and player.distanceto(unit) <= 4 then
+            player.settarget(unit)
+            player.interact()
+        end
+    end
+end
+
 Aurora:RegisterRoutine(function()
     -- print("战斗外逻辑")
     -- Run appropriate function based on combat status
+    -- autoFriendNpc()
     if preventafk then
         if UnitIsAFK("player") then
             ClearAFK()
