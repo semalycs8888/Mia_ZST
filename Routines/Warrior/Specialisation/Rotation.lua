@@ -184,12 +184,16 @@ local isdraw = true
 local onlyincombat = true
 local drawLineWidth = 2
 local farDistance = false
-local isguaji = false
+-- local isguaji = false
 local autoRemixYuanPan = false
 local autoRemixShenPan = false
 local autoRemixFengBao = false
 local autoRemixShenLin = false
 local autoRemixNiuQu = false
+local remixafk = false
+local preventafk = true
+local controlSpellsCastingThreshold = 10
+local drawThunderClapRange = true
 -- 将respondSpells添加到Aurora全局表，使其可以在其他文件中访问
 Aurora.respondSpells = Aurora.respondSpells or {
     1237071,--石拳
@@ -615,6 +619,7 @@ gui:Category("Mia_Warrior")
             pdcontrol = not pdcontrol
         end
     })
+    :Spacer()
     :Button({
         text = getLocalizedText("控制技能应对列表", "Control Spells Countermeasures List"),
         key = "controlSpellsList",  -- Config key for saving
@@ -624,17 +629,37 @@ gui:Category("Mia_Warrior")
            TZList:createList("controlSpellsList")
         end
     })
-    :Header({ text = getLocalizedText("风暴之锤打断回响哨兵，天街打开牢笼，水闸装弹", "Special Response for Storm Bolt") })
+    :Slider({
+        text = getLocalizedText("控制技能施法阈值(大于设置百分比时施法)", "Control Spells Casting Threshold"),
+        key = "controlSpellsCastingThreshold",  -- Config key for saving
+        min = 1,
+        max = 90,
+        default = 10,          -- Default value
+        tooltip = getLocalizedText("控制技能施法阈值", "Control Spells Casting Threshold"), -- Optional tooltip
+        onChange = function(self, value)
+            controlSpellsCastingThreshold = value
+        end
+    })
+    :Header({ text = getLocalizedText("卡条控制开关", "special control") })
     :Checkbox({
-        text = fbzcicon..getLocalizedText("风暴之锤", "Storm Bolt"),
+        text = zdbicon..pdnhicon..fbzcicon..getLocalizedText("卡条控制开关", "special control"),
         key = "feature.isFbaoSp",  -- Config key for saving
         default = true,          -- Default value
-        tooltip = getLocalizedText("风暴之锤", "Storm Bolt"), -- Optional tooltip
+        tooltip = getLocalizedText("卡条控制开关", "special control"), -- Optional tooltip
         onChange = function(self, checked)
             -- print("Checkbox changed:", checked)
             isFbaoSp = not isFbaoSp
         end
    })
+   :Button({
+        text = getLocalizedText("卡条控断列表", "special control list"),
+        key = "specialcontrollist",  -- Config key for saving
+        -- default = true,          -- Default value
+        tooltip = getLocalizedText("卡条控断列表", "special control list"), -- Optional tooltip
+        onClick = function(self, checked)
+           TZList:createList("specialcontrollist")
+        end
+    })
 :Tab(getLocalizedText("打断", "Interrupt"))
 :Dropdown({
     text = getLocalizedText("打断目标", "Interrupt Target"),
@@ -743,8 +768,51 @@ gui:Category("Mia_Warrior")
             drawConnection = checked
         end
     })
+    :Checkbox({
+        text = getLocalizedText("雷霆一击范围", "Thunder Clap"),
+        key = "ThunderClapRange",  -- Config key for saving
+        default = true,          -- Default value
+        tooltip = getLocalizedText("绘制雷霆一击范围", "Draw Thunder Clap Range"), -- Optional tooltip
+        onChange = function(self, checked)
+            -- print("Checkbox changed:", checked)
+            drawThunderClapRange = checked
+        end
+    })
+    :Tab(getLocalizedText("特殊功能", "Special"))
+    :Checkbox({
+        text = getLocalizedText("防止AFK", "Prevent AFK"),
+        key = "preventafk",  -- Config key for saving
+        default = true,          -- Default value
+        tooltip = getLocalizedText("防止AFK", "Prevent AFK"), -- Optional tooltip
+        onChange = function(self, checked)
+            -- print("Checkbox changed:", checked)
+            preventafk = checked
+        end
+    })
+    :Checkbox({
+        text = getLocalizedText("Remix挂机", "Remix AFK"),
+        key = "remixafk",  -- Config key for saving
+        default = false,          -- Default value
+        tooltip = getLocalizedText("Remix挂机", "Remix AFK"), -- Optional tooltip
+        onChange = function(self, checked)
+            -- print("Checkbox changed:", checked)
+            remixafk = checked
+        end
+    })
 
    local function InitConfig()
+    local specialcontrolliststring = Aurora.Config:Read("specialcontrollist")
+    if specialcontrolliststring then 
+        Aurora.specialcontrollist = {}
+        for item in string.gmatch(specialcontrolliststring, "([^;]+)") do
+            table.insert(Aurora.fbaoSpells, item)
+        end
+    else
+        -- print("未创建列表")
+        local dataString = table.concat(Aurora.fbaoSpells, ";")
+        Aurora.Config:Write("specialcontrollist", dataString)
+    end
+
     local jslb = Aurora.Config:Read("jianshangyingdui")
     if jslb then
         -- print("减伤应对列表:", jslb)
@@ -860,6 +928,9 @@ gui:Category("Mia_Warrior")
     isuseTrinket1 = Aurora.Config:Read("feature.useTrinket1")
     trinket1state = Aurora.Config:Read("feature.trinket1")
     trinket2state = Aurora.Config:Read("feature.trinket2")
+    preventafk = Aurora.Config:Read("preventafk")
+    remixafk = Aurora.Config:Read("remixafk")
+    drawThunderClapRange = Aurora.Config:Read("ThunderClapRange")
 end
    
 
@@ -905,7 +976,7 @@ local reflectionSpellsAny = {
     335345
 }
 
-local fbaoSpells = {
+Aurora.fbaoSpells = {
     461796,
     347721,
     432967
@@ -938,6 +1009,11 @@ local function draw()
             end
             if drawConnection then
                 canvas:LineRaw(unit.position.x, unit.position.y, unit.position.z,target.position.x, target.position.y, target.position.z)
+            end
+            if drawThunderClapRange then
+                local r1, g1, b1, a1 = Draw:GetColor("Deathknight", 100)
+                canvas:SetColor(r1, g1, b1, a1)
+                canvas:Circle(player.position.x, player.position.y, player.position.z,12)
             end
         end
         
@@ -1083,9 +1159,9 @@ local function controlexec(spell)
                 if enemyCastingId ~= 0 then
                     -- print("正在施法",enemyCastingId)
                     for _, v in pairs(Aurora.controlSpellsList) do
-                        if tonumber(v) == enemyCastingId then
+                        if tonumber(v) == enemyCastingId and (enemy.castingpct >= controlSpellsCastingThreshold or enemy.channelingpct >= controlSpellsCastingThreshold) then
                             if spell == spellbooks.spells.FANGBAOZHICHUI then
-                                if player.distanceto(enemy) <= 20 and player.haslos(enemy) and enemy.playerfacing180 then
+                                if player.distanceto(enemy) <= 20 and player.haslos(enemy) and enemy.playerfacing180  then
                                    return spell:cast(enemy)
                                 end
                             end
@@ -1333,7 +1409,7 @@ spellbooks.spells.POFUCHENZHOU:callback(function(spell, logic)
 end)
 
 spellbooks.spells.LEITINGYIJI:callback(function(spell, logic)
-    if isguaji then
+    if remixafk then
        return spell:cast(player)
     end
     -- print("雷霆一击",isLT)
@@ -1560,6 +1636,25 @@ spellbooks.spells.PODANNUHOU:callback(function (spell, logic)
             controlexec(spell)
         end
     end
+    if isFbaoSp then
+         if spell:ready() then
+            local activeenemies = Aurora.activeenemies
+            if activeenemies then
+                activeenemies:each(function(enemy, index, uptime)
+                    if enemy.casting then
+                        if enemy.castingremains <= 1.5 then
+                            for k, v in pairs(Aurora.fbaoSpells) do
+                                if enemy.castingspellid == tonumber(v) and player.distanceto(enemy) <= 8 then
+                                    spell:cast(enemy)
+                                return true
+                            end
+                        end
+                    end
+                end
+                end)  
+            end
+        end
+    end
 end)
 
 spellbooks.spells.JIJIENAHAN:callback(function(spell, logic)
@@ -1589,6 +1684,25 @@ spellbooks.spells.ZHENDANGBO:callback(function(spell, logic)
             controlexec(spell)
         end
     end
+    if isFbaoSp then
+         if spell:ready() then
+            local activeenemies = Aurora.activeenemies
+            if activeenemies then
+                activeenemies:each(function(enemy, index, uptime)
+                    if enemy.casting then
+                        if enemy.castingremains <= 1.5 then
+                            for k, v in pairs(Aurora.fbaoSpells) do
+                                if enemy.castingspellid == tonumber(v) and player.distanceto(enemy) <= 8 and player.haslos(enemy) and enemy.playerfacing180 then
+                                    spell:cast(player)
+                                return true
+                            end
+                        end
+                    end
+                end
+                end)  
+            end
+        end
+    end
 end)
 
 spellbooks.spells.FANGBAOZHICHUI:callback(function(spell, logic)
@@ -1614,8 +1728,8 @@ spellbooks.spells.FANGBAOZHICHUI:callback(function(spell, logic)
                 activeenemies:each(function(enemy, index, uptime)
                     if enemy.casting then
                         if enemy.castingremains <= 1.5 then
-                            for k, v in pairs(fbaoSpells) do
-                                if enemy.castingspellid == v and player.distanceto(enemy) <= 20 and player.haslos(enemy) and enemy.playerfacing180 then
+                            for k, v in pairs(Aurora.fbaoSpells) do
+                                if enemy.castingspellid == tonumber(v) and player.distanceto(enemy) <= 20 and player.haslos(enemy) and enemy.playerfacing180 then
                                     spell:cast(enemy)
                                 return true
                             end
@@ -1884,6 +1998,7 @@ local function battleReady()
     if fuwen:isknown() and fuwen:ready() and not player.aura(1234969) then
         fuwen:use(player)
     end
+    -- Aurora.alert("Spell Ready!", 355)
 end
 
 local healthItemList = {
@@ -1920,6 +2035,11 @@ end
 Aurora:RegisterRoutine(function()
     -- print("战斗外逻辑")
     -- Run appropriate function based on combat status
+    if preventafk then
+        if UnitIsAFK("player") then
+            ClearAFK()
+        end
+    end
     if player.dead or player.iseating or player.isdrinking or player.issummoning or player.casting or player.mounted then return end
     -- print("玩家名字",player.name)
     resurrectionInBattle()
@@ -1938,7 +2058,7 @@ Aurora:RegisterRoutine(function()
             -- print("脱战")
             battleReady()
             if spells.ZHANDOUNUHOU:execute() then return true end
-            if isguaji then 
+            if remixafk then 
                 if spells.LEITINGYIJI:execute() then return true end
             end
             
@@ -2413,9 +2533,9 @@ Macro:RegisterCommand("castmouseover107570", function()
         castedCount = 0
     end
 end)
-Macro:RegisterCommand("GJ", function()
-    isguaji = not isguaji
-end)
+-- Macro:RegisterCommand("GJ", function()
+--     isguaji = not isguaji
+-- end)
 
 
 
@@ -2423,6 +2543,11 @@ local function ShowUpdateAlert()
     local updateMessages = {
         "支持 防战和狂暴战双专精。切换专精后/rl重新加载。",
         "开启自动使用挫志怒吼后，盾墙期间不会使用挫志怒吼。",
+        "添加 防止AFK功能",
+        "添加 设置控断阈值功能",
+        "添加 卡条控断列表",
+        "添加 雷霆一击 范围显示",
+        "添加 Remix挂机功能,配合防止AFK功能使用",
         "*** 有问题及时联系作者(秒改) ***"
     }
 
@@ -3051,6 +3176,7 @@ spells.ZHENDANGBO:callback(function(spell, logic)
             return controlZhendangbo(spell)
         end
     end
+
 end)
 spells.ZHANDOUNUHOU:callback(function(spell, logic)
     if insertSpell == spell.id then

@@ -40,7 +40,7 @@ function UpdateAlert:CreateMainFrame(title)
     -- 如果没有提供标题，使用默认标题
     title = title or "提示"
     
-    local frame = StdUi:Window(UIParent, 300, 330, getLocalizedText("提示", "Alert"))
+    local frame = StdUi:Window(UIParent, 400, 330, getLocalizedText("提示", "Alert"))
     
     -- 移除右上角关闭按钮
     if frame.closeBtn then

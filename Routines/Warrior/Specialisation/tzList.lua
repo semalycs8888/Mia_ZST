@@ -518,6 +518,8 @@ function TZList:SaveData()
         Aurora.ragingRecoverySpellsList = self.itemList
     elseif configKey == "StormBoltList" then
         Aurora.StormBoltSpellsList = self.itemList
+    elseif configKey == "specialcontrollist" then
+        Aurora.fbaoSpells = self.itemList
     end
 end
 
