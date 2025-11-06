@@ -1191,7 +1191,7 @@ local function isTargetBehind(spell, distance)
     target = Aurora.UnitManager:Get("target")
     if target.exists then
         if not target.playerfacing180 or target.distanceto(player) > distance or not spell:castable(target) then
-            Aurora.activeenemies:each(function(enemy, index, uptime)
+            Aurora.activeenemies:within(distance):each(function(enemy, index, uptime)
                 if enemy.playerfacing180 and enemy.distanceto(player) <= distance and spell:castable(enemy) then
                     -- print("切目标斩杀")
                     return spell:cast(enemy)
@@ -3762,6 +3762,7 @@ local function ShowUpdateAlert()
     local updateMessages = {
         -- "时间:10月7日 13:23",
         "支持 防战和狂暴战双专精。切换专精后/rl重新加载。",
+        "优化 盾牌冲锋位移问题",
         "*** 有问题及时联系作者(秒改) ***"
     }
 
