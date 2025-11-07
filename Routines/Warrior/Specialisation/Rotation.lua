@@ -1412,6 +1412,9 @@ spellbooks.spells.LEITINGYIJI:callback(function(spell, logic)
     if remixafk then
        return spell:cast(player)
     end
+    if player.aura(386478) and player.enemiesaround(12) == 1 then
+        return
+    end
     -- print("雷霆一击",isLT)
     if player.enemiesaround(8) >= 1 and isLT then
         return spell:cast(player)
@@ -1505,6 +1508,9 @@ end)
 
 spellbooks.spells.DUNPAIMENGJI:callback(function(spell, logic)
     -- print("盾牌猛击")
+    if player.aura(386478) and player.enemiesaround(12) > 1 then
+        return
+    end
     return isTargetBehind(spell, 5)
 end)
 
@@ -3763,6 +3769,7 @@ local function ShowUpdateAlert()
         -- "时间:10月7日 13:23",
         "支持 防战和狂暴战双专精。切换专精后/rl重新加载。",
         "优化 盾牌冲锋位移问题",
+        "优化 伤害",
         "*** 有问题及时联系作者(秒改) ***"
     }
 
