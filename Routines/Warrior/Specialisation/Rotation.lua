@@ -1274,7 +1274,10 @@ local function isJiaJian(spell)
 end
 
 spellbooks.spells.REMIXNIUQU2:callback(function(spell,logic)
-    return Tool:Remix(spell)
+    if addSpellStat == "魔刺" or addSpellStat == "1242973" then
+        addSpellStat = "1242973"
+        return Tool:Remix(spell)
+    end
 end)
 
 spellbooks.spells.REMIXFENGBAO:callback(function(spell,logic)
@@ -1960,7 +1963,7 @@ local function loop()
   if spells.REMIXSHENLIN:execute() then return true end
   if spells.REMIXSHENPAN:execute() then return true end
   if spells.REMIXYUANPAN:execute() then return true end
---   if spells.REMIXNIUQU2:execute() then return true end
+  if spells.REMIXNIUQU2:execute() then return true end
   
   if spells.JIJIENAHAN:execute() then return true end
   if spells.ZHENDANGBO:execute() then return true end
