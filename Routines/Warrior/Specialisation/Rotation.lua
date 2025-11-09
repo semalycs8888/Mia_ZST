@@ -194,6 +194,8 @@ local remixafk = false
 local preventafk = true
 local controlSpellsCastingThreshold = 10
 local drawThunderClapRange = true
+local autoBattleStance = true
+
 -- 将respondSpells添加到Aurora全局表，使其可以在其他文件中访问
 Aurora.respondSpells = Aurora.respondSpells or {
     1237071,--石拳
@@ -318,6 +320,9 @@ local zdbicon = Aurora.texture(46968)
 local pdnhicon = Aurora.texture(5246)
 local fsfsicon = Aurora.texture(23920)
 local yuanhuicon = Aurora.texture(3411)
+local zhandouzitaicon = Aurora.texture(107574)
+local fangyuzitaicon = Aurora.texture(386164)
+
 
 
 local function CreateSkillMacro()
@@ -799,6 +804,16 @@ gui:Category("Mia_Warrior")
             remixafk = checked
         end
     })
+    :Checkbox({
+        text = fangyuzitaicon..zhandouzitaicon..getLocalizedText("天神开启战斗姿态", "Auto Use Battle Stance"),
+        key = "autoBattleStance",  -- Config key for saving
+        default = false,          -- Default value
+        tooltip = getLocalizedText("天神下凡自动开启战斗姿态,天神结束切换防御姿态", "Auto Use Battle Stance"), -- Optional tooltip
+        onChange = function(self, checked)
+            -- print("Checkbox changed:", checked)
+            autoBattleStance = checked
+        end
+    })
 
    local function InitConfig()
     local specialcontrolliststring = Aurora.Config:Read("specialcontrollist")
@@ -931,6 +946,7 @@ gui:Category("Mia_Warrior")
     preventafk = Aurora.Config:Read("preventafk")
     remixafk = Aurora.Config:Read("remixafk")
     drawThunderClapRange = Aurora.Config:Read("ThunderClapRange")
+    autoBattleStance = Aurora.Config:Read("autoBattleStance")
 end
    
 
@@ -1272,6 +1288,16 @@ local function isJiaJian(spell)
     -- end
     return true
 end
+spellbooks.spells.ZHANDOUZITAI:callback(function(spell,logic)
+    if autoBattleStance and player.aura(107574) and player.aura(386208) then
+        return spell:cast(player)
+    end
+end)
+spellbooks.spells.FANGYUZITAI:callback(function(spell,logic)
+    if autoBattleStance and not player.aura(107574) and player.aura(386164) then
+        return spell:cast(player)
+    end
+end)
 
 spellbooks.spells.REMIXNIUQU2:callback(function(spell,logic)
     if addSpellStat == "魔刺" or addSpellStat == "1242973" then
@@ -1944,6 +1970,8 @@ local function loop()
 
   injuryResponse()
 --   if spells.YUANHU:execute() then return true end
+  if spells.ZHANDOUZITAI:execute() then return true end
+  if spells.FANGYUZITAI:execute() then return true end
   if spells.QUANJI:execute() then return true end
   if spells.YINGYONGTOUZHI:execute() then return true end
   if spells.CHAOFENG:execute() then return true end
@@ -2565,6 +2593,7 @@ local function ShowUpdateAlert()
         -- "优化 盾牌冲锋位移问题",
         "优化 伤害",
         "remix 魔刺可以插入了",
+        "添加选项 天神下凡自动开启战斗姿态,天神结束切换防御姿态",
         "*** 有问题及时联系作者(秒改) ***"
     }
 
