@@ -520,6 +520,8 @@ function TZList:SaveData()
         Aurora.StormBoltSpellsList = self.itemList
     elseif configKey == "specialcontrollist" then
         Aurora.fbaoSpells = self.itemList
+    elseif configKey == "fashufansheyingduiaoe" then
+        Aurora.reflectionSpellsaoe = self.itemList
     end
 end
 

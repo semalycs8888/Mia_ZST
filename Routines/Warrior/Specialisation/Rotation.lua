@@ -104,7 +104,7 @@ local spellbooks = {
         --[破坏者]228920
         POHUAIZHE = NewSpell(228920),
         --[援护]3411
-        YUANHU = NewSpell(3411),
+        YUANHU = NewSpell(3411,{ignoreFacing = true,queued = true}),
         BENGCUI = NewSpell(436358),
         REMIXNIUQU = NewSpell(1237711),
         REMIXSHENLIN = NewSpell(1233577),
@@ -112,6 +112,7 @@ local spellbooks = {
         REMIXFENGBAO = NewSpell(1233181),
         REMIXSHENPAN = NewSpell(1251045),
         REMIXNIUQU2 = NewSpell(1242973),
+        JILI = NewSpell(280001),
     },
     auras = {
         
@@ -171,7 +172,7 @@ local healthPf = 20
 local fbzccontrol = true
 local zdbcontrol = true
 local pdcontrol = true
-local autoyuanhu = true
+local autoyuanhu = false
 --打断目标
 local interruptstat = "all"
 --打断阈值
@@ -195,6 +196,9 @@ local preventafk = true
 local controlSpellsCastingThreshold = 10
 local drawThunderClapRange = true
 local autoBattleStance = true
+local interveneonce = false
+local ShieldChargePreventDisplacement = true
+local keepblock = true
 
 -- 将respondSpells添加到Aurora全局表，使其可以在其他文件中访问
 Aurora.respondSpells = Aurora.respondSpells or {
@@ -285,7 +289,7 @@ Aurora.reflectionSpells = {
     423536,--[神圣惩击]
     427470,--[神圣惩击]
     448515,--[神圣审判]
-    427950,
+    -- 427950,
     427951,
     
     423015,
@@ -297,7 +301,9 @@ Aurora.reflectionSpells = {
     465666,--[火花猛击]
     466190,--[雷霆重拳]
     468631,
-    1214468
+    1214468,
+    427897,
+    448492,
 }
 Aurora.controlSpellsList = {
     427342,
@@ -307,7 +313,7 @@ Aurora.controlSpellsList = {
 }
 
 Aurora.interveneList = {
-    462859
+    427621,
 }
 local cznhicon = Aurora.texture(1160)
 local dqicon = Aurora.texture(871)
@@ -322,6 +328,7 @@ local fsfsicon = Aurora.texture(23920)
 local yuanhuicon = Aurora.texture(3411)
 local zhandouzitaicon = Aurora.texture(107574)
 local fangyuzitaicon = Aurora.texture(386164)
+local dpcficon = Aurora.texture(385952)
 
 
 
@@ -362,6 +369,8 @@ gui:Category("Mia_Warrior")
     :Button({text = Aurora.texture(23920)..Aurora.Tool:GetSpellNameByID(23920), key = "autojingguang", width = 100, height = 30,onClick = function() CopyToClipboard("/"..Aurora.Macro.baseCommand.." spellreflection") end})
     :Button({text = Aurora.texture(384318)..getLocalizedText("自动雷鸣之吼", "auto "..Tool:GetSpellNameByID(384318)), key = "autoleinguohou", width = 100, height = 30,onClick = function() CopyToClipboard("/"..Aurora.Macro.baseCommand.." thunderousroar") end})
     :Button({text = Aurora.texture(76290)..getLocalizedText("自动选择目标", "auto select target"), key = "autoselecttarget", width = 100, height = 30,onClick = function() CopyToClipboard("/"..Aurora.Macro.baseCommand.." switchtarget") end})
+    -- :Button({text = Aurora.texture(3411)..getLocalizedText("自动援护", "auto "..Tool:GetSpellNameByID(3411)), key = "autoyuanhu", width = 100, height = 30,onClick = function() CopyToClipboard("/"..Aurora.Macro.baseCommand.." intervene") end})
+    -- :Button({text = Aurora.texture(3411)..getLocalizedText("援护一次", "Intervene Once"), key = "interveneonce", width = 100, height = 30,onClick = function() CopyToClipboard("/"..Aurora.Macro.baseCommand.." interveneonce") end})
 
     :Tab(getLocalizedText("减伤技能", "Damage Reduction Skills"))
    :Header({ text = getLocalizedText("前置减伤应对", "Pre-damage Reduction Response") })
@@ -415,6 +424,16 @@ gui:Category("Mia_Warrior")
         key = "fashufansheyingdui",
         onClick = function() 
             TZList:createList("fashufansheyingdui")
+        end
+    })
+    :Button({
+        text = getLocalizedText("法术反射应对aoe列表", "Spell Reflection Response AOE List"),
+        width = 120,      -- Optional
+        height = 25,      -- Optional
+        tooltip = getLocalizedText("法术反射应对aoe列表", "Spell Reflection Response AOE List"), -- Optional tooltip    
+        key = "fashufansheyingduiaoe",
+        onClick = function() 
+            TZList:createList("fashufansheyingduiaoe")
         end
     })
    :Header({ text = wskticon..getLocalizedText("无视苦痛", "ignore pain") })
@@ -814,6 +833,28 @@ gui:Category("Mia_Warrior")
             autoBattleStance = checked
         end
     })
+    :Checkbox({
+        text = dpcficon..getLocalizedText("盾牌冲锋防止位移", "盾牌冲锋防止位移"),
+        key = "ShieldChargePreventDisplacement",  -- Config key for saving
+        default = true,          -- Default value
+        tooltip = getLocalizedText("开启盾牌冲锋防止位移", "盾牌冲锋防止位移"), -- Optional tooltip
+        onChange = function(self, checked)
+            -- print("Checkbox changed:", checked)
+            ShieldChargePreventDisplacement = checked
+        end
+    })
+    :Checkbox({
+        text = dpcficon..getLocalizedText("破釜续格挡", "破釜续格挡"),
+        key = "keepblock",  -- Config key for saving
+        default = true,          -- Default value
+        tooltip = getLocalizedText("破釜续格挡", "破釜续格挡"), -- Optional tooltip
+        onChange = function(self, checked)
+            -- print("Checkbox changed:", checked)
+            keepblock = checked
+        end
+    })
+
+
 
    local function InitConfig()
     local specialcontrolliststring = Aurora.Config:Read("specialcontrollist")
@@ -905,6 +946,20 @@ gui:Category("Mia_Warrior")
             local dataString = table.concat(Aurora.interruptSpellswhitelist, ";")
             Aurora.Config:Write("interruptSpellswhitelist", dataString)
         end
+        -- 法术反射应对aoe列表
+        local fsfslbaoe = Aurora.Config:Read("fashufansheyingduiaoe")
+        if fsfslbaoe then
+            -- print("法术反射应对aoe列表:", fsfslbaoe)
+            Aurora.reflectionSpellsaoe = {}
+            for item in string.gmatch(fsfslbaoe, "([^;]+)") do
+                table.insert(Aurora.reflectionSpellsaoe, tonumber(item))
+            end
+        else
+            -- print("未创建列表")
+            local dataString = table.concat(Aurora.reflectionSpellsaoe, ";")
+            Aurora.Config:Write("fashufansheyingduiaoe", dataString)
+        end
+
 
 
     --用户设置血量阈值
@@ -947,6 +1002,7 @@ gui:Category("Mia_Warrior")
     remixafk = Aurora.Config:Read("remixafk")
     drawThunderClapRange = Aurora.Config:Read("ThunderClapRange")
     autoBattleStance = Aurora.Config:Read("autoBattleStance")
+    ShieldChargePreventDisplacement = Aurora.Config:Read("ShieldChargePreventDisplacement")
 end
    
 
@@ -981,7 +1037,7 @@ local autoBenGCui = false
 
 
 local reflectionSpellsAny = {
-    427950,--[隐修院 烈焰]
+    -- 427950,--[隐修院 烈焰]
     323414,
     423015,
     446649,
@@ -1354,20 +1410,18 @@ spellbooks.spells.BENGCUI:callback(function(spell,logic)
 end)
 
 spellbooks.spells.YUANHU:callback(function(spell,logic)
-    -- print("援护")
-    if autoyuanhu then
+    print("援护")
+    if autoyuanhu or interveneonce then
         -- local group = Aurora.group
         local activeenemies = Aurora.activeenemies
         if activeenemies then
             activeenemies:each(function(enemy, index, uptime)
                 if enemy.casting then
-                    -- print(enemy.castingspellid)
-                    for _, v in pairs(Aurora.interveneList) do
-                        if tonumber(v) == enemy.castingspellid and enemy.casttarget then
-                            -- print("援护",enemy.castingspellid,enemy.casttarget.name)
-                            if enemy.casttarget.name ~= player.name then
-                                return spell:cast(enemy.casttarget)
-                            end
+                    if table.contains(Aurora.interveneList,enemy.castingspellid) then
+                        print("援护",enemy.castingspellid,enemy.casttarget.name)
+                        if enemy.casttarget.exists and enemy.casttarget.name ~= player.name then
+                            print("援护目标是玩家")
+                            return spell:cast(enemy.casttarget)
                         end
                     end
                 end
@@ -1435,6 +1489,14 @@ spellbooks.spells.POFUCHENZHOU:callback(function(spell, logic)
             return spell:cast(player)
         end
     end
+    if keepblock and spellbooks.spells.JILI:isknown() then
+        if not player.aura(132404) and player.enemiesaround(12) > 0 then
+            if player.rage < 30 or spellbooks.spells.DUNPAIGEDANG:charges() == 0 then
+                return spell:cast(player)
+            end
+        end
+    end
+
 end)
 
 spellbooks.spells.LEITINGYIJI:callback(function(spell, logic)
@@ -1445,13 +1507,13 @@ spellbooks.spells.LEITINGYIJI:callback(function(spell, logic)
         return
     end
     -- print("雷霆一击",isLT)
-    if player.enemiesaround(8) >= 1 and isLT then
+    if player.enemiesaround(8) >= 1 then
         return spell:cast(player)
     end
-    if not spellbooks.spells.DUNPAIMENGJI:ready() and player.enemiesaround(8) >= 1 then
-        -- print("盾猛击cd中")
-        return spell:cast(player)
-    end
+    -- if not spellbooks.spells.DUNPAIMENGJI:ready() and player.enemiesaround(8) >= 1 then
+    --     -- print("盾猛击cd中")
+    --     return spell:cast(player)
+    -- end
 end)
 
 spellbooks.spells.YINGYONGTOUZHI:callback(function(spell, logic)
@@ -1576,14 +1638,33 @@ end)
 
 spellbooks.spells.DUNPAICHONGFENG:callback(function(spell, logic)
     -- print("盾牌冲锋")
+    target = Aurora.UnitManager:Get("target")
     if addSpellStat == "盾牌冲锋" or addSpellStat == "385952" then
         addSpellStat = "385952"
-        target = Aurora.UnitManager:Get("target")
+
         if target.exists and target.enemy and player.distanceto(target) <= 25 and spell:ready() and spell:isknown() then
             return spell:cast(target)
         end
-    elseif isDunpaichongfeng and spell:ready() and spell:isknown() then
-        return isTargetBehind(spell, 3)
+    elseif isDunpaichongfeng then
+        if ShieldChargePreventDisplacement then
+            if player.speed == 0 then
+                if target.exists and target.enemy and target.speed == 0 and target.distanceto(player) <= 4 then
+                    return spell:cast(target)
+                else
+                    local activeenemies = Aurora.activeenemies:within(5.5)
+                    if activeenemies then
+                        activeenemies:each(function(enemy)
+                            if enemy.exists and enemy.enemy and enemy.distanceto(player) <= 4 and enemy.speed == 0 then
+                                return spell:cast(enemy)
+                            end
+                        end)
+                    end
+                end
+                
+            end
+        else
+            return isTargetBehind(spell, 3)
+        end
     end
     -- isTargetBehind(spell, 5)
 end)
@@ -1632,29 +1713,50 @@ end)
 
 spellbooks.spells.FUCHOU:callback(function(spell, logic)
     -- print("复仇")
-    local enemyCount = player.enemiesaround(8)
+    -- local enemyCount = player.enemiesaround(8)
     target = Aurora.UnitManager:Get("target")
     --免费复仇逻辑
-    if player.aura(5302) then
-        target = Aurora.UnitManager:Get("target")
-        if target.exists and target.enemy and enemyCount >= 1 then
-            return spell:cast(player)
-        else
-            isLoop = true;
-        end
-    end
+    -- if player.aura(5302) then
+    --     -- target = Aurora.UnitManager:Get("target")
+    --     if target.exists and target.enemy and enemyCount >= 1 then
+    --         return spell:cast(player)
+    --     else
+    --         isLoop = true;
+    --     end
+    -- end
     --付费复仇逻辑
     -- local shiedMax = player.healthmax * 0.3
-    if player.rage >= 30 and enemyCount >= 1 then
-        return spell:cast(player)
+    local activeenemies = Aurora.activeenemies:within(5.5)
+    if activeenemies then
+        activeenemies:each(function(enemy, index, uptime)
+            if enemy.exists and enemy.enemy and enemy.playerfacing90 and player.rage >= 30 then
+                return spell:cast(player)
+            end
+        end)
     end
+    -- if player.rage >= 30 and player.distanceto(target) < 6 then
+    --     return spell:cast(player)
+    -- end
 end)
 --补重伤
 spellbooks.spells.FUCHOU2:callback(function(spell, logic)
     -- print("复仇2")
+--     target = Aurora.UnitManager:Get("target")
+--    if target.exists and target.enemy and not target.aura(115767) and player.rage >= 30 and player.distanceto(target) < 5 then
+--         return spell:cast(player)
+--     end
     target = Aurora.UnitManager:Get("target")
-   if target.exists and target.enemy and not target.aura(115767) and player.rage >= 30 and player.distanceto(target) < 5 then
+    --免费复仇逻辑
+    if player.aura(5302) then
         return spell:cast(player)
+    end
+    local activeenemies = Aurora.activeenemies:within(5.5)
+    if activeenemies then
+        activeenemies:each(function(enemy, index, uptime)
+            if enemy.exists and enemy.enemy and not enemy.aura(115767) and enemy.playerfacing90 then
+                return spell:cast(player)
+            end
+        end)
     end
 end)
 
@@ -1946,11 +2048,16 @@ spellbooks.spells.FASHUFANSHE:callback(function(spell, logic)
                                 end
                             end
                         elseif enemy.castingremains <= 1 then
+                            for k, v in pairs(Aurora.reflectionSpellsaoe) do
+                                if enemy.castingspellid == tonumber(v) then
+                                   return spell:cast(player)
+                                end
+                            end
                             for k, v in pairs(reflectionSpellsAny) do
                                 if enemy.castingspellid == tonumber(v) then
                                    return spell:cast(player)
                                 end
-                            end 
+                            end
                         end
                     end
                 end)
@@ -1969,7 +2076,7 @@ local spells = spellbook.spells
 local function loop()
 
   injuryResponse()
---   if spells.YUANHU:execute() then return true end
+    -- if spells.YUANHU:execute() then return true end
   if spells.ZHANDOUZITAI:execute() then return true end
   if spells.FANGYUZITAI:execute() then return true end
   if spells.QUANJI:execute() then return true end
@@ -2011,7 +2118,7 @@ local function loop()
   if spells.LEITINGYIJI:execute() then return true end
   if spells.DUNPAIMENGJI:execute() then return true end
   
---   if spells.FUCHOU2:execute() then return true end
+  if spells.FUCHOU2:execute() then return true end
   if spells.ZHANSHA:execute() then return true end
   if spells.FUCHOU:execute() then return true end
   if spells.AutoAttack:execute() then return true end
@@ -2078,16 +2185,51 @@ local function autoFriendNpc()
         end
     end
 end
-
+-- local isyhLoop = true
+-- local updateId = Aurora:OnUpdate(function(elapsed)
+--     -- Code to run every 0.1 seconds
+--     if not player.combat then return end
+--     -- print("战斗内逻辑",autoyuanhu,interveneonce)
+--     if autoyuanhu or interveneonce then
+--         -- local group = Aurora.group
+--         local activeenemies = Aurora.activeenemies
+--         if activeenemies then
+--             activeenemies:each(function(enemy, index, uptime)
+--                 if enemy.casting then
+--                     if table.contains(Aurora.interveneList,enemy.castingspellid) then
+--                         -- print("援护",enemy.castingspellid,enemy.casttarget.name)
+--                         print("援护是否准备就绪",spellbooks.spells.YUANHU:getcd(),enemy.casttarget.exists,enemy.casttarget.name ~= player.name,enemy.casttarget.distanceto(player) < 25,enemy.casttarget.haslos(player))
+--                         if enemy.casttarget.exists and enemy.casttarget.name ~= player.name then
+--                             print("援护目标不是玩家")
+--                             -- loadstringsecure("CastSpellByID(3411,enemy.casttarget)")()
+--                             CastSpellByID(3411,enemy.casttarget)
+--                             -- return spellbooks.spells.YUANHU:cast(enemy.casttarget)
+--                             -- return spellbooks.spells.FASHUFANSHE:cast(enemy.casttarget)
+--                         end
+--                     end
+--                 end
+--             end)
+--         end
+--     end
+-- end)
+local lua = loadstringsecure("JumpOrAscendStart()")
 Aurora:RegisterRoutine(function()
     -- print("战斗外逻辑")
     -- Run appropriate function based on combat status
-    -- autoFriendNpc()
+    -- -- autoFriendNpc()
+    -- local target = Aurora.UnitManager:Get("target")
+    -- if target.exists and target.friend and target ~= player then
+    --     -- loadstringsecure("CastSpellByID(3411,target)")()
+    --     -- CastSpellByID(3411,target)
+    --     spellbooks.spells.YUANHU:cast(target)
+    -- end
     if preventafk then
         if UnitIsAFK("player") then
-            ClearAFK()
+            -- ClearAFK()
+            lua()
         end
     end
+
     if player.dead or player.iseating or player.isdrinking or player.issummoning or player.casting or player.mounted then return end
     -- print("玩家名字",player.name)
     resurrectionInBattle()
@@ -2096,6 +2238,7 @@ Aurora:RegisterRoutine(function()
     if isLoop then
         if player.combat then
             -- CheckImportantTimer()
+            -- Aurora.updateCallbacks[updateId].enabled = true
             healthItem()
             isBaofayao()
             if isuseTrinket then
@@ -2104,6 +2247,8 @@ Aurora:RegisterRoutine(function()
             loop()
         else
             -- print("脱战")
+            -- Aurora.updateCallbacks[updateId].enabled = false
+            -- isyhLoop = true
             battleReady()
             if spells.ZHANDOUNUHOU:execute() then return true end
             if remixafk then 
@@ -2159,6 +2304,9 @@ Aurora.EventHandler:RegisterEvent("SPELL_CAST_SUCCESS", function(eventData)
             addSpellStat = nil
             castedCount = 0
         end
+        -- if spellId == 3411 then
+        --     interveneonce = false
+        -- end
     end
 end)
 
@@ -2378,7 +2526,21 @@ if spellbooks.spells.REMIXYUANPAN:isknown() then
         autoRemixYuanPan = true
     end
 end
-
+-- if spellbooks.spells.YUANHU:isknown() then
+    -- local auto_yuanhu_toggle = Aurora:AddGlobalToggle({
+    --     label = getLocalizedText("援护", "devastator"),              -- Display name (max 11 characters)
+    --     var = "auto_yuanhu_toggle",       -- Unique identifier for saving state
+    --     icon = 3411, -- Icon texture or spell ID
+    --     tooltip = getLocalizedText("援护", "devastator"), -- Tooltip text
+    --     onClick = function(value)    -- Optional callback when clicked
+    --         -- print("自动切换目标:", value)
+    --         autoyuanhu = value
+    --     end
+    -- })
+    -- if auto_yuanhu_toggle:GetValue() then
+    --     autoyuanhu = true
+    -- end
+-- end
 
 
 
@@ -2490,6 +2652,20 @@ Macro:RegisterCommand("BKB", function()
     autoTianshen_toggle:SetValue(autoTianshen)
     -- print("天神下凡：",autoTianshen)
 end, "天神下凡(avenging wrath)")
+-- Macro:RegisterCommand("intervene", function()
+--     autoyuanhu = not autoyuanhu
+--     -- Aurora.Config:Write("feature.isLonghou", isLonghou)
+--     auto_yuanhu_toggle:SetValue(autoyuanhu)
+--     -- print("援护：",autoyuanhu)
+-- end, "援护(Intervene)")
+-- Macro:RegisterCommand("interveneonce", function()
+--     interveneonce = true
+--     -- Aurora.Config:Write("feature.isLonghou", isLonghou)
+--     -- auto_yuanhu_toggle:SetValue(autoyuanhu)
+--     -- print("援护：",autoyuanhu)
+-- end, "援护(Intervene Once)")
+
+
 
 
 -- 修复命令解析问题：将cast命令改为使用Macro:RegisterCommand以确保正确解析参数
@@ -2590,10 +2766,10 @@ end)
 local function ShowUpdateAlert()
     local updateMessages = {
         "支持 防战和狂暴战双专精。切换专精后/rl重新加载。",
-        -- "优化 盾牌冲锋位移问题",
-        "优化 伤害",
-        "remix 魔刺可以插入了",
-        "添加选项 天神下凡自动开启战斗姿态,天神结束切换防御姿态",
+
+        "优化 怒气利用",
+        "添加 自定义法术反射aoe列表,提高硬度",
+        "添加 破釜续格挡开关",
         "*** 有问题及时联系作者(秒改) ***"
     }
 

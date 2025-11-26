@@ -1,5 +1,26 @@
 local player = Aurora.UnitManager:Get("player")
 if player.spec == 3 then
+Aurora.reflectionSpellsaoe = {
+    1225174,
+    1225218,
+    1236703,
+    1240821,
+    1240811,
+    355429,
+    357243,
+    350875,
+    438473,
+    1241693,
+    1241785,
+    461487,
+    451102,
+    426787,
+    448888,
+    448492,
+    427897,
+    448791,
+    423015,
+}
 Aurora.dungronSpell = {
     --圆顶
     [1221130] = "吞噬打击",
@@ -1072,7 +1093,8 @@ Aurora.spellReflectionSpellsList = {
     465666,--[火花猛击]
     466190,--[雷霆重拳]
     468631,
-    1214468
+    1214468,
+    427897,
 }
 
 Aurora.ragingRecoverySpellsList = {}
